@@ -1,6 +1,9 @@
 # ignore folder where log and database will be
 data/
 
+# ignore our virtual environment
+venv/
+
 #---------------- Generic Python Ignores --------------
 
  Byte-compiled / optimized / DLL files
