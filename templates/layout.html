@@ -1,0 +1,50 @@
+<!doctype html>
+<head>
+
+  <title>Garage Pi</title>
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <script>window.jQuery || document.write('<script src="{{url_for('static', filename='jquery_1.11.3/jquery.min.js') }}">\x3C/script>')</script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+</head>
+<body>
+
+<div class="container-fluid">
+
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header navbar-brand pull-left">Garage Pi</div>
+    <div>
+      <ul class="nav navbar-nav navbar-right pull-right">
+        {% if not session.logged_in %}
+          <li><a href="{{ url_for('login') }}"><span class="glyphicon glyphicon-log-in"></span> log in</a></li>
+        {% else %}
+          <li><a href="{{ url_for('show_control') }}">control</a></li>
+          <li><a href="{{ url_for('show_history') }}">history</a></li>
+          <li><a href="{{ url_for('logout') }}"><span class="glyphicon glyphicon-log-out"></span> log out</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+{% for message in get_flashed_messages() %}
+  <div class="alert alert-info fade in">
+    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+    {{ message }}
+  </div>
+{% endfor %}
+
+<div>
+  {% block body %}{% endblock %}
+</div>
+
+</div>
+
+</body>

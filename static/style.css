@@ -1,0 +1,56 @@
+/* Make modal popup from center on non-mobile:
+   http://stackoverflow.com/questions/18422223/bootstrap-3-modal-vertical-position-center#comment48707086_25160044 */
+@media only screen and (min-width: 768px) {
+  .modal {
+    text-align: center;
+  }
+  .modal:before {
+    display: inline-block;
+    vertical-align: middle;
+    content: " ";
+    height: 100%;
+  }
+  .modal-dialog {
+    display: inline-block;
+    text-align: left;
+    vertical-align: middle;
+  }
+  .modal.fade .modal-dialog {
+    -webkit-transform: scale(0.9);
+    -moz-transform: scale(0.9);
+    -ms-transform: scale(0.9);
+    transform: scale(0.9);
+    opacity: 0;
+    -webkit-transition: all 0.3s ease;
+    -moz-transition: all 0.3s ease;
+    transition: all 0.3s ease;
+  }
+  .modal.fade.in .modal-dialog {
+    -webkit-transform: scale(1);
+    -moz-transform: scale(1);
+    -ms-transform: scale(1);
+    transform: scale(1);
+    //-webkit-transform: translate3d(0, -300px, 0);
+    //transform: translate3d(0, -300px, 0);
+    opacity: 1;
+  }
+}
+
+/* Disable navbar collapse:
+   http://stackoverflow.com/questions/23535289/bootstrap-3-disable-navbar-collapse */
+.navbar-collapse.collapse {
+  display: block!important;
+}
+.navbar-nav>li, .navbar-nav {
+  float: left !important;
+}
+.navbar-nav.navbar-right:last-child {
+  margin-right: -15px !important;
+}
+.navbar-right {
+  float: right!important;
+}
+
+.open_closed_btn {
+  padding: 20px;
+}
