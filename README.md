@@ -27,7 +27,6 @@ I also used Bootstrap for the front end. All these are new to me so forgive / co
 
 I'm definitely planning on getting these done.
 
-- Simplify the installation--yeesh it's long.
 - Make the password configurable. You can change it yourself, but you have to edit the python source file. Yuck!
 - Send an alert if the door is open past a certain time. (I'm always leaving the door open all night.)
 
@@ -39,91 +38,28 @@ Okay, I might never implement these, but here are some ideas for what would make
 
 # Installation
 
+#### Online Installation
+
 1. Follow all the instructions at [Driscosity](http://www.driscocity.com/idiots-guide-to-a-raspberry-pi-garage-door-opener/)
 up until the point where he has you installing WebIOPi.
-2. First we need to install git and pull down this repo. Alternatively, you can download these files
-some other way. Just put it in `~/garage` to match below.
+2. Run the fully automated installer by running this command logged into your Raspberry Pi.
 
-    ``` bash
-    sudo apt-get install git  
-    cd ~  
-    git clone https://github.com/nathanpjones/GaragePi.git garage
-    cd ~/garage
-    ```
+    `curl -s "https://raw.githubusercontent.com/nathanpjones/GaragePi/master/online_install.sh" | bash`
 
-3. Now we need to set up a virtual environment for the web app.
+(Click here to view the full contents of [online_install.sh](https://github.com/nathanpjones/GaragePi/blob/master/online_install.sh)
+and then [setup.sh](https://github.com/nathanpjones/GaragePi/blob/master/setup.sh) that it will call.)
 
-    ``` bash
-    sudo easy_install pip
-    sudo pip install virtualenv
-    ./setup.sh
-    ```
-    
-4. For the RPi.GPIO library to work correctly, it has to run with root privileges. We'll accomplish this by
-having our virtual environment's Python instance to run as root.
+It might take a while for all this to work, but at the end you should be able to access your site at your Raspberry Pi's
+IP address.
 
-    ``` bash
-    sudo chown -v root:root ~/garage/venv/bin/python
-    sudo chmod u+s ~/garage/venv/bin/python
-    ```
-    
-5. Now we need to create and give the proper access to the `data` folder so everyone can write to it.
-***This assumes your username is "pi".***
+This will put everything in `~/garage_pi`. Look to the `data` subfolder for the app logs and the database.
 
-    ``` bash
-    sudo groupadd garage_site
-    sudo usermod -a -G garage_site pi
-    sudo usermod -a -G garage_site www-data
-    sudo chgrp -R garage_site ~/garage/data
-    sudo chmod g+w ~/garage/data
-    ```
+#### Offline Install
 
-6. Now we need to install and setup the web server that will host our site.
-We'll use [lighttpd](http://www.lighttpd.net/) because it's lightweight.
+If you want to pull down the repo manually (recommended if you want to choose where to install), all you have 
+to do is run `setup.sh` in the project root folder.
 
-    ``` bash
-    sudo apt-get install lighttpd
-    ```
-
-7. Let's mark our "fcgi" file as executable so lighttpd can run it.
-
-    ``` bash
-    chmod +x ~/garage/garage.fcgi
-    ```
-
-8. Now we have to edit lighttpd's config file to start our web app. I prefer nano, but you can use
-whichever editor you like.
-
-    ``` bash
-    sudo nano /etc/lighttpd/lighttpd.conf
-    ```
-    
-    Add the following line to the `server.modules = (...)` section:
-    ```
-    "mod_fastcgi",
-    ```
-    
-    Add this section to the end of the file:
-    ```
-    fastcgi.server = ("/" =>
-        ((
-            "socket" => "/tmp/garage-fcgi.sock",
-            "bin-path" => "/home/pi/garage/garage.fcgi",
-            "check-local" => "disable",
-            "max-procs" => 1,
-            "fix-root-scriptname" => "enable",
-        ))
-    )
-
-    alias.url = (
-        "/static/" => "/home/pi/garage/static/",
-    )
-    ```
-
-9. Now we have to restart lighttpd to pick up the config changes.
-
-    ``` bash
-    sudo service lighttpd restart
-    ```
-    
-10. Whew! That's it. You should now be able to see your web app by going to your raspberry pi's IP address.
+``` bash
+chmod -v +x setup.sh
+./setup.sh
+```
