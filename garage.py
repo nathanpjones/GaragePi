@@ -200,6 +200,9 @@ def door_opened_or_closed(pin_changed):
 
 # ----- Run -------
 
+# Make sure database is created before anything else
+initdb_command()
+
 # Note that we need cleanup
 app.config['NEED_CLEANUP'] = True
 
@@ -207,9 +210,6 @@ app.config['NEED_CLEANUP'] = True
 GPIO.setup(app.config['REED_PIN'], GPIO.IN)
 GPIO.add_event_detect(app.config['REED_PIN'], GPIO.BOTH, callback=door_opened_or_closed)
 door_opened_or_closed(app.config['REED_PIN'])
-
-# Make sure database is created
-initdb_command()
 
 # Run
 if __name__ == '__main__':
