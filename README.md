@@ -1,19 +1,29 @@
 # GaragePi
 Overengineer your garage door with your Raspberry Pi!
 
-Use a Raspberry Pi to open or close your garage door and to sense whether it's currently open.
-Your spouse will think you're crazy, but it's so cool!
+Use a Raspberry Pi to open or close your garage door and to sense whether it's currently open. You can do this from the comfort of your couch or anywhere in the world (with an [appropriate VPN connection](http://readwrite.com/2014/04/10/raspberry-pi-vpn-tutorial-server-secure-web-browsing)). Your spouse may think you're crazy, but it's so cool!
 
-I started with this guide by Chris Driscoll at [Driscosity](http://www.driscocity.com/idiots-guide-to-a-raspberry-pi-garage-door-opener/).
-Chris has an awesome guide with step-by-step instructions, pictures, and even a video of the
-system in operation. I use this same setup for GaragePi.
+I started with this guide by Chris Driscoll at [Driscosity](http://www.driscocity.com/idiots-guide-to-a-raspberry-pi-garage-door-opener/). Chris has an awesome guide with step-by-step instructions, pictures, and even a video of the system in operation. I use this same setup for GaragePi.
 
-What he has is great for a simple opener and status display, but the second time I used it my relay got stuck
-closed because of a connection issue (it's javascript based). I also wanted more features and more control
-over what was going on.
+What he has is great for a simple opener and status display, but the second time I used it my relay got stuck closed because of a connection issue (it's javascript based). I also wanted more features and more control over what was going on.
 
-So I wrote a [Flask](http://flask.pocoo.org/) app (Python) with some JSON/jQuery for keeping the status updated.
-I also used Bootstrap for the front end. All these are new to me so forgive / correct any noob mistakes.
+So I wrote a [Flask](http://flask.pocoo.org/) app (Python) with some JSON/jQuery for keeping the status updated. I also used Bootstrap for the front end. All these are new to me so forgive / correct any noob mistakes.
+
+#### Screenshots
+
+<div>
+
+<a href="http://www.nathanpjones.com/wp/wp-content/uploads/2015/08/01-Door-Open.png"><img src="http://www.nathanpjones.com/wp/wp-content/uploads/2015/08/01-Door-Open.png" width="250" height="445"></a>
+
+<a href="http://www.nathanpjones.com/wp/wp-content/uploads/2015/08/02-Close-Button-Pushed.png"><img src="http://www.nathanpjones.com/wp/wp-content/uploads/2015/08/02-Close-Button-Pushed.png" width="250" height="445"></a>
+
+<a href="http://www.nathanpjones.com/wp/wp-content/uploads/2015/08/03-After-Closed.png"><img src="http://www.nathanpjones.com/wp/wp-content/uploads/2015/08/03-After-Closed.png" width="250" height="445"></a>
+
+<a href="http://www.nathanpjones.com/wp/wp-content/uploads/2015/08/04-History.png"><img src="http://www.nathanpjones.com/wp/wp-content/uploads/2015/08/04-History.png" width="250" height="445"></a>
+
+<a href="http://www.nathanpjones.com/wp/wp-content/uploads/2015/08/05-History-Landscape.png"><img src="http://www.nathanpjones.com/wp/wp-content/uploads/2015/08/05-History-Landscape.png" width="445" height="250"></a>
+
+</div> 
 
 # Features
 
@@ -46,18 +56,15 @@ up until the point where he has you installing WebIOPi.
 
     `curl -s "https://raw.githubusercontent.com/nathanpjones/GaragePi/master/online_install.sh" | bash`
 
-(Click here to view the full contents of [online_install.sh](https://github.com/nathanpjones/GaragePi/blob/master/online_install.sh)
-and then [setup.sh](https://github.com/nathanpjones/GaragePi/blob/master/setup.sh) that it will call.)
+(If you want to know what's going on, here are the full contents of [online_install.sh](https://github.com/nathanpjones/GaragePi/blob/master/online_install.sh) and then [setup.sh](https://github.com/nathanpjones/GaragePi/blob/master/setup.sh) that is then called.)
 
-It might take a while for all this to work, but at the end you should be able to access your site at your Raspberry Pi's
-IP address.
+It might take a while for all this to work, but at the end you should be able to access your site at your Raspberry Pi's IP address.
 
 This will put everything in `~/garage_pi`. Look to the `data` subfolder for the app logs and the database.
 
 #### Offline Install
 
-If you want to pull down the repo manually (recommended if you want to choose where to install), all you have 
-to do is run `setup.sh` in the project root folder.
+If you want to pull down the repo manually (recommended if you want to choose where to install), all you have to do is run `setup.sh` in the project root folder.
 
 ``` bash
 chmod -v +x setup.sh
