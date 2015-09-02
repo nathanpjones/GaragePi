@@ -37,8 +37,7 @@ app.config.update(dict(
     NEED_CLEANUP=False,
 ))
 app.logger.info('looking for app config in \'%s\'' % os.path.join(app.instance_path, 'app.cfg'))
-with app.open_instance_resource('app.cfg') as f:
-    config = f.read()
+app.config.from_pyfile('app.cfg')
 
 relayLock = threading.Lock()
 
