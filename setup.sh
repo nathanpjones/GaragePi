@@ -36,16 +36,23 @@ else
   sudo chown -v root:root "$DIR/venv/bin/python"
   sudo chmod -v u+s "$DIR/venv/bin/python"
 
-  # Make a data directory for the site's logs and database
-  # and create a group that lets www-data and pi both have
+  # Make a instance directory for the site's logs, database,
+  # and config and create a group that lets www-data and pi both have
   # write access.
-  echo -e "\nCreating data directory..."
-  mkdir -v "$DIR/data"
+  echo -e "\nCreating instance directory..."
+  mkdir -v "$DIR/instance"
   sudo groupadd garage_site
   sudo usermod -a -G garage_site $USER
   sudo usermod -a -G garage_site www-data
-  sudo chgrp -v -R garage_site "$DIR/data"
-  sudo chmod -v g+w "$DIR/data"
+  sudo chgrp -v -R garage_site "$DIR/instance"
+  sudo chmod -v g+w "$DIR/instance"
+  
+  if [ ! -f "$DIR/instance/app.cfg" ]; then
+    # Copy sample config file over and generate key if
+    # config file doesn't already exist.
+    cp "$DIR/sample_app.cfg" "$DIR/instance/app.cfg"
+    python "$DIR/generate_secret_key.py" >> "$DIR/instance/app.cfg"
+  fi
   
   # Install lighttpd, enable fastcgi, and make our fcgi executable
   echo -e "\nInstalling lighttpd..."

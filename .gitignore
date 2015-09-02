@@ -1,5 +1,5 @@
-# ignore folder where log and database will be
-data/
+# ignore instance folder
+instance/
 
 # ignore our virtual environment
 venv/

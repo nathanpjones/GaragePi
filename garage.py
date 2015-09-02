@@ -18,9 +18,9 @@ class Struct:
 #------------- Setup ------------
 
 # create our little application :)
-app = Flask(__name__)
+app = Flask(__name__, instance_relative_config=True)
 
-file_handler = RotatingFileHandler(os.path.join(app.root_path,'data/garage.log'), 'a', 1 * 1024 * 1024, 10)
+file_handler = RotatingFileHandler(os.path.join(app.instance_path,'garage.log'), 'a', 1 * 1024 * 1024, 10)
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
 app.logger.addHandler(file_handler)
@@ -30,17 +30,15 @@ app.logger.info('__name__ is \'%s\'' % __name__)
 
 # Load default config and override config from an environment variable
 app.config.update(dict(
-    DATABASE=os.path.join(app.root_path, 'data/history.db'),
+    DATABASE=os.path.join(app.instance_path, 'history.db'),
     RELAY_PIN=7,
     REED_PIN=18,
     DOOR_OPENED=None, # 1 for open, 0 for closed
     NEED_CLEANUP=False,
-    DEBUG=True,
-    SECRET_KEY='asdlkvhy37gh#&*5492',
-    USERNAME='admin',
-    PASSWORD='garageWonder!'
 ))
-app.config.from_envvar('GARAGE_SETTINGS', silent=True)
+app.logger.info('looking for app config in \'%s\'' % os.path.join(app.instance_path, 'app.cfg'))
+with app.open_instance_resource('app.cfg') as f:
+    config = f.read()
 
 relayLock = threading.Lock()
 
