@@ -1,11 +1,14 @@
 import os
 import time
-#from threading import lock
+import schedule
 import threading
+from threading import Thread
 from sqlite3 import dbapi2 as sqlite3
 import RPi.GPIO as GPIO
 from flask import Flask, request, session, g, redirect, url_for, abort, \
      render_template, flash, jsonify, current_app, has_request_context
+import requests
+import json
 from werkzeug.local import LocalProxy
 import atexit
 import logging
@@ -193,7 +196,61 @@ def door_opened_or_closed(pin_changed):
         else:
             add_to_history('StartupSensorRead', 'Door state initialized to %s.' % (get_status().status_text))
 
+    if (old_state is not None):
+        if get_status().is_open:
+            trigger_ifttt('garage_door_changed', 'opened')
+            trigger_ifttt('garage_door_opened')
+        else:
+            trigger_ifttt('garage_door_changed', 'closed')
+            trigger_ifttt('garage_door_closed')
+
     app.logger.info("door %s (pin %d is %d)" % ("OPENED" if new_state == GPIO.HIGH else "CLOSED", pin_changed, new_state))
+
+# ----- IFTTT --------
+
+@app.route('/test_ifttt')
+def test_ifttt():
+    if not app.debug: return 'Only available when debug is set to True in application config.'
+    event_name = request.args.get('event_name')
+    #if not event_name: return redirect(url_for('show_control'), code=302)
+    value1 = request.args.get('value1')
+    value2 = request.args.get('value2')
+    value3 = request.args.get('value3')
+    app.logger.info("Testing IFTTT with: %r %r %r %r" % (event_name, value1, value2, value3))
+    result = trigger_ifttt(event_name, value1, value2, value3)
+    #return redirect(url_for('show_control'), code=302)
+    return 'Result: %r' % (result,)
+
+def trigger_ifttt(event_name, value1=None, value2=None, value3=None):
+    maker_key = app.config['IFTTT_MAKER_KEY']
+    if not maker_key: return
+  
+    url = 'https://maker.ifttt.com/trigger/{0}/with/key/{1}'.format(event_name, maker_key)
+
+    app.logger.info("Sending IFTTT trigger for %s with values %r %r %r" % (event_name, value1, value2, value3))
+
+    if value1 or value2 or value3:
+        data = {}
+        if value1: data['value1'] = value1
+        if value2: data['value2'] = value2
+        if value3: data['value3'] = value3
+        
+        r = requests.post(url, json=data)
+    else:
+        r = requests.post(url)
+
+    app.logger.info("IFTTT response for {0}: {1}".format(event_name, r.text))
+    
+    return r.text
+
+def check_door_open_for_warning():
+    if get_status().is_open:
+        trigger_ifttt('garage_door_warning', 'open')
+
+def run_schedule():
+    while 1:
+        schedule.run_pending()
+        time.sleep(1)   
 
 # ----- Run -------
 
@@ -207,6 +264,15 @@ app.config['NEED_CLEANUP'] = True
 GPIO.setup(app.config['REED_PIN'], GPIO.IN)
 GPIO.add_event_detect(app.config['REED_PIN'], GPIO.BOTH, callback=door_opened_or_closed)
 door_opened_or_closed(app.config['REED_PIN'])
+
+# Set up warning timer if there's a setting
+if app.config['DOOR_OPEN_WARNING_TIME']:
+    app.logger.info('Starting schedule to check door at {0}...'.format(app.config['DOOR_OPEN_WARNING_TIME']))
+    schedule.every().day.at(app.config['DOOR_OPEN_WARNING_TIME']).do(check_door_open_for_warning)
+    t = Thread(target=run_schedule)
+    t.start()
+else:
+    app.logger.info('No schedule to run.')
 
 # Run
 if __name__ == '__main__':
