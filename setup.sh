@@ -20,7 +20,7 @@ else
 
   # Make sure pip and virtualenv are installed
   echo "Installing pip..."
-  sudo easy_install pip
+  curl --silent --show-error --retry 5 https://bootstrap.pypa.io/get-pip.py | sudo python2.7
   echo -e "\nInstalling virtualenv..."
   sudo pip install virtualenv
 
