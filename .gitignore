@@ -4,6 +4,9 @@ instance/
 # ignore our virtual environment
 venv/
 
+#---- PyCharm ----
+.idea
+
 #---------------- Generic Python Ignores --------------
 
  Byte-compiled / optimized / DLL files
