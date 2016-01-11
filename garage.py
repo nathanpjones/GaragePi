@@ -1,4 +1,4 @@
-import os
+import os, grp, stat
 import time
 import schedule
 import threading
@@ -15,6 +15,36 @@ import logging
 from logging.handlers import RotatingFileHandler
 import collections
 
+# http://stackoverflow.com/questions/1407474
+class GroupWriteRotatingFileHandler(RotatingFileHandler):
+    def __init__(self, filename, mode='a', maxBytes=0, backupCount=0, encoding=None):
+        super(GroupWriteRotatingFileHandler, self).__init__(filename, mode, maxBytes, backupCount, encoding)
+        print 'calling ensure permissions'
+        self.ensurePermissions()
+
+    def doRollover(self):
+        """
+        Override base class method to make the new log file group writable.
+        """
+        print 'executing base rollover'
+        # Rotate the file first.
+        RotatingFileHandler.doRollover(self)
+
+        print 'calling ensure permissions'
+        self.ensurePermissions()
+
+    def ensurePermissions(self):
+        print 'ensuring permissions'
+        # Make sure the group is garage_site
+        uid = os.stat(self.baseFilename).st_uid
+        gid = grp.getgrnam("garage_site").gr_gid
+        os.chown(self.baseFilename, uid, gid)
+
+        # Add group write to the current permissions.
+        currMode = os.stat(self.baseFilename).st_mode
+        os.chmod(self.baseFilename, currMode | stat.S_IWGRP)
+
+
 class Struct:
     def __init__(self, **entries): self.__dict__.update(entries)
 
@@ -23,11 +53,13 @@ class Struct:
 # create our little application :)
 app = Flask(__name__, instance_relative_config=True)
 
-file_handler = RotatingFileHandler(os.path.join(app.instance_path,'garage.log'), 'a', 1 * 1024 * 1024, 10)
+file_handler = GroupWriteRotatingFileHandler(os.path.join(app.instance_path,'garage.log'), 'a', 1 * 1024 * 1024, 10)
 file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
+file_handler.setFormatter(logging.Formatter('%(asctime)s [%(process)-5d:%(thread)d] %(levelname)-5s %(message)s [in %(module)s @ %(pathname)s:%(lineno)d]'))
 app.logger.addHandler(file_handler)
-app.logger.setLevel(logging.INFO)
+app.debug_log_format = '%(relativeCreated)-6d [%(process)-5d:%(thread)#x] %(levelname)-5s %(message)s [in %(module)s @ %(pathname)s:%(lineno)d]'
+app.logger.setLevel(logging.DEBUG)
+
 app.logger.info('---------- Starting up!')
 app.logger.info('__name__ is \'%s\'' % __name__)
 
@@ -38,8 +70,12 @@ app.config.update(dict(
     REED_PIN=18,
     DOOR_OPENED=None, # 1 for open, 0 for closed
     NEED_CLEANUP=False,
+    SECRET_KEY='', # should be overwritten by your app config!
 ))
-app.logger.info('looking for app config in \'%s\'' % os.path.join(app.instance_path, 'app.cfg'))
+default_cfg_file = os.path.join(app.root_path, 'default_app.cfg')
+app.logger.debug('Loading default config file from \'%s\'' % default_cfg_file)
+app.config.from_pyfile(default_cfg_file)
+app.logger.debug('Looking for custom app config in \'%s\'' % os.path.join(app.instance_path, 'app.cfg'))
 app.config.from_pyfile('app.cfg')
 
 relayLock = threading.Lock()
@@ -139,11 +175,12 @@ def get_status():
 
 def get_cpu_temperature():
     res = os.popen('cat /sys/class/thermal/thermal_zone0/temp').readline()
-    app.logger.debug(res)
+    app.logger.debug('Checked CPU temp and got: %r' % res)
     return float(res) / 1000.0
 
 def get_gpu_temperature():
     res = os.popen('vcgencmd measure_temp').readline()
+    app.logger.debug('Checked GPU temp and got: %r' % res)
     return float(res.replace("temp=","").replace("'C\n",""))
 
 @app.route('/history')
@@ -277,5 +314,5 @@ else:
 # Run
 if __name__ == '__main__':
     app.logger.info('Starting local server...')
-    app.run(host = "0.0.0.0",port = 80,debug=True, use_reloader=False)
+    app.run(host = "0.0.0.0", port = 80, debug=True, use_reloader=False)
 #regarding reloader: http://stackoverflow.com/questions/25504149/why-does-running-the-flask-dev-server-run-itself-twice
