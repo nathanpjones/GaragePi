@@ -79,7 +79,7 @@ fastcgi.server = (\"/\" =>
     ))
 )
 
-alias.url = (
+alias.url += (
     \"/static/\" => \"${DIR}/static/\",
 )
 #END OF GaragePi SERVER
