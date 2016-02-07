@@ -12,37 +12,9 @@ import json
 from werkzeug.local import LocalProxy
 import atexit
 import logging
-from logging.handlers import RotatingFileHandler
 import collections
-
-# http://stackoverflow.com/questions/1407474
-class GroupWriteRotatingFileHandler(RotatingFileHandler):
-    def __init__(self, filename, mode='a', maxBytes=0, backupCount=0, encoding=None):
-        super(GroupWriteRotatingFileHandler, self).__init__(filename, mode, maxBytes, backupCount, encoding)
-        print('calling ensure permissions')
-        self.ensurePermissions()
-
-    def doRollover(self):
-        """
-        Override base class method to make the new log file group writable.
-        """
-        print('executing base rollover')
-        # Rotate the file first.
-        RotatingFileHandler.doRollover(self)
-
-        print('calling ensure permissions')
-        self.ensurePermissions()
-
-    def ensurePermissions(self):
-        print('ensuring permissions')
-        # Make sure the group is garage_site
-        uid = os.stat(self.baseFilename).st_uid
-        gid = grp.getgrnam("garage_site").gr_gid
-        os.chown(self.baseFilename, uid, gid)
-
-        # Add group write to the current permissions.
-        currMode = os.stat(self.baseFilename).st_mode
-        os.chmod(self.baseFilename, currMode | stat.S_IWGRP)
+from common.group_write_handler import GroupWriteRotatingFileHandler
+from common.iftt import IftttEvent
 
 
 class Struct:
@@ -79,6 +51,16 @@ app.logger.debug('Looking for custom app config in \'%s\'' % os.path.join(app.in
 app.config.from_pyfile('app.cfg')
 
 relayLock = threading.Lock()
+
+# Set up iftt events if a maker key is present
+if app.config['IFTTT_MAKER_KEY'] is not None:
+    changed_event = IftttEvent(app.config['IFTTT_MAKER_KEY'], 'garage_door_changed', app.logger)
+    opened_event = IftttEvent(app.config['IFTTT_MAKER_KEY'], 'garage_door_opened', app.logger)
+    closed_event = IftttEvent(app.config['IFTTT_MAKER_KEY'], 'garage_door_closed', app.logger)
+else:
+    changed_event = None
+    opened_event = None
+    closed_event = None
 
 # Set up GPIO using BCM numbering
 GPIO.setmode(GPIO.BCM)
@@ -235,11 +217,14 @@ def door_opened_or_closed(pin_changed):
 
     if (old_state is not None):
         if get_status().is_open:
-            trigger_ifttt('garage_door_changed', 'opened')
-            trigger_ifttt('garage_door_opened')
+            change = 'opened'
+            specific_event = opened_event
         else:
-            trigger_ifttt('garage_door_changed', 'closed')
-            trigger_ifttt('garage_door_closed')
+            change = 'closed'
+            specific_event = closed_event
+
+        if changed_event is not None: changed_event.trigger(change)
+        if specific_event is not None: specific_event.trigger()
 
     app.logger.info("door %s (pin %d is %d)" % ("OPENED" if new_state == GPIO.HIGH else "CLOSED", pin_changed, new_state))
 
@@ -248,46 +233,33 @@ def door_opened_or_closed(pin_changed):
 @app.route('/test_ifttt')
 def test_ifttt():
     if not app.debug: return 'Only available when debug is set to True in application config.'
+
+    maker_key = app.config['IFTTT_MAKER_KEY']
+    if not maker_key: return 'No maker key provided!'
+
     event_name = request.args.get('event_name')
     #if not event_name: return redirect(url_for('show_control'), code=302)
     value1 = request.args.get('value1')
     value2 = request.args.get('value2')
     value3 = request.args.get('value3')
     app.logger.info("Testing IFTTT with: %r %r %r %r" % (event_name, value1, value2, value3))
-    result = trigger_ifttt(event_name, value1, value2, value3)
-    #return redirect(url_for('show_control'), code=302)
+
+    event = IftttEvent(maker_key, request.args.get('event_name'), app.logger)
+    result = event.trigger(value1, value2, value3)
+
     return 'Result: %r' % (result,)
 
-def trigger_ifttt(event_name, value1=None, value2=None, value3=None):
-    maker_key = app.config['IFTTT_MAKER_KEY']
-    if not maker_key: return
-  
-    url = 'https://maker.ifttt.com/trigger/{0}/with/key/{1}'.format(event_name, maker_key)
-
-    app.logger.info("Sending IFTTT trigger for %s with values %r %r %r" % (event_name, value1, value2, value3))
-
-    if value1 or value2 or value3:
-        data = {}
-        if value1: data['value1'] = value1
-        if value2: data['value2'] = value2
-        if value3: data['value3'] = value3
-        
-        r = requests.post(url, json=data)
-    else:
-        r = requests.post(url)
-
-    app.logger.info("IFTTT response for {0}: {1}".format(event_name, r.text))
-    
-    return r.text
-
 def check_door_open_for_warning():
-    if get_status().is_open:
-        trigger_ifttt('garage_door_warning', 'open')
+    pass
+    maker_key = app.config['IFTTT_MAKER_KEY']
+    if get_status().is_open and maker_key:
+        event = IftttEvent(maker_key, 'garage_door_warning', app.logger)
+        event.trigger('open')
 
 def run_schedule():
     while 1:
         schedule.run_pending()
-        time.sleep(1)   
+        time.sleep(1)
 
 # ----- Run -------
 
@@ -310,9 +282,3 @@ if app.config['DOOR_OPEN_WARNING_TIME']:
     t.start()
 else:
     app.logger.info('No schedule to run.')
-
-# Run
-if __name__ == '__main__':
-    app.logger.info('Starting local server...')
-    app.run(host = "0.0.0.0", port = 80, debug=True, use_reloader=False)
-#regarding reloader: http://stackoverflow.com/questions/25504149/why-does-running-the-flask-dev-server-run-itself-twice

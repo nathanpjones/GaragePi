@@ -3,7 +3,7 @@
 {% if session.logged_in %}
 <div class="container-fluid">
   <div class="row">
-  
+
     <div class="col-sm-6 col-sm-push-6">
       <div class="panel panel-primary text-center">
         <div class="panel-heading">Door Status</div>
@@ -16,7 +16,7 @@
         <h5>GPU: <span id="gpuTemp">?</span>° C</h5>
       </div>
     </div>
-    
+
     <div class="col-sm-6 col-sm-pull-6 open_closed_btn">
 
       <!-- Modal Confirmation -->
@@ -37,13 +37,13 @@
           </div>
         </div>
       </div>
-      
+
       <!-- Open / Close button -->
       <button type="button" id="openCloseButton" class="btn btn-primary btn-lg btn-block" style="vertical-align: middle" data-toggle="modal" data-target="#confirmModal">
           Open / Close Door
       </button>
     </div>
-    
+
   </div>
 </div>
 
@@ -58,8 +58,8 @@
   }
 
   function updateOpenClosed() {
-    $.getJSON($SCRIPT_ROOT + "/query_status", 
-              function(data) { 
+    $.getJSON($SCRIPT_ROOT + "/query_status",
+              function(data) {
                 $("#status").text(data.is_open ? "OPEN": "CLOSED")
                             .removeClass("text-danger text-success")
                             .addClass(data.is_open ? "text-danger": "text-success");
