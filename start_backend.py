@@ -1,5 +1,4 @@
-# This entry point is intended to be used to start the webserver at a terminal for debugging purposes.
-# The entry point for hosting on lighttpd should be the .fcgi file.
+# This entry point is intended to be used to start the backend at a terminal for debugging purposes.
 
 from backend import app
 

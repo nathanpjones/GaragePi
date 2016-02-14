@@ -1,3 +1,5 @@
+# This is intended to be run by the shell script in /etc/init.d
+
 import grp
 import daemon
 import lockfile

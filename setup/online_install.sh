@@ -13,17 +13,17 @@ else
 
   # Make sure git is installed
   echo "Making sure that git is installed..."
-  sudo apt-get install git  
+  sudo apt-get install git
 
   # Pull down the repo
   echo -e "\nPulling down the repo..."
-  cd ~ 
+  cd ~
   git clone https://github.com/nathanpjones/GaragePi.git garage_pi
 
   # Run the setup script
   echo -e "\nCalling the setup script..."
   cd ~/garage_pi
-  chmod -v +x setup.sh
-  ./setup.sh
+  chmod -v +x setup/setup.sh
+  ./setup/setup.sh
 
 fi

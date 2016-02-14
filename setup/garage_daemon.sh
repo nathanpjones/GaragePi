@@ -11,16 +11,16 @@
 ### END INIT INFO
 
 # Change the next 3 lines to suit where you install your script and what you want to call it
-#DIR=/usr/local/bin/myservice
-DIR=/home/pi/remote_debug/garagepi
-DAEMON=$DIR/venv/bin/python
+DIR=/home/pi/garagepi
+DAEMON=${DIR}/venv/bin/python
 DAEMON_NAME=garagepi
 
-# Add any command line options for your daemon here
-DAEMON_OPTS="$DIR/start_backend_daemon.py"
+# Our daemon is technically the python interpreter from our virtual environment so
+# we'll pass it the script to start the backend in daemon mode.
+DAEMON_OPTS="${DIR}/start_backend_daemon.py"
 
 # This next line determines what user the script runs as.
-# Root generally not recommended but necessary if you are using the Raspberry Pi GPIO from Python.
+# Root is necessary since we want to access the Raspberry Pi's GPIO.
 DAEMON_USER=root
 
 # The process ID of the script when it runs is stored here:
