@@ -26,7 +26,7 @@ else
 
   # Install virtual environment and requirements
   echo -e "\nSetting up virtual environment..."
-  virtualenv --no-site-packages --distribute venv \
+  virtualenv --python python3 --no-site-packages --distribute venv \
   && source venv/bin/activate \
   && pip install -r requirements.txt
 

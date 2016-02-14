@@ -1,4 +1,5 @@
 import requests
+import logging
 
 class IftttEvent:
 
@@ -6,13 +7,11 @@ class IftttEvent:
     event_name = ''
     logger = None
 
-    def __init__(self, maker_key, event_name, logger):
+    def __init__(self, maker_key: str, event_name: str, logger: logging.Logger):
         """
-        Initializes a new instance of the class.
-
-        :type maker_key: str
-        :type event_name: str
-        :type logger: logging.Logger
+        :param maker_key: The authenticating maker key
+        :param event_name: The name of the event to trigger
+        :param logger: Logger for logging purposes
         """
         if logger is None:
             raise Exception("Logger is missing!")
@@ -27,7 +26,7 @@ class IftttEvent:
         self.event_name = event_name
         self.logger = logger
 
-    def trigger(self, value1=None, value2=None, value3=None):
+    def trigger(self, value1: str=None, value2: str=None, value3: str=None):
         url = 'https://maker.ifttt.com/trigger/{0}/with/key/{1}'.format(self.event_name, self.maker_key)
 
         self.logger.info("Sending IFTTT trigger for %s with values %r %r %r" % (self.event_name, value1, value2, value3))
