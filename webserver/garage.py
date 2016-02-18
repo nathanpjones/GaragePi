@@ -61,7 +61,7 @@ def get_api_client() -> GaragePiClient:
 
 def get_db() -> GarageDb:
     """
-    Opens a new database connection if there is none yet for the
+    Creates a new database connection if there is none yet for the
     current application context.
     """
     if not hasattr(g, 'sqlite_db'):
@@ -73,9 +73,6 @@ def get_db() -> GarageDb:
 def close_db(error):
     """Closes the database again at the end of the request."""
     app.logger.debug("Tearing down app context")
-    if hasattr(g, 'sqlite_db'):
-        app.logger.debug("Tearing down app context: closing db")
-        g.sqlite_db.close()
     if hasattr(g, 'api_client'):
         app.logger.debug("Tearing down app context: closing api client")
         g.api_client.close()

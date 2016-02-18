@@ -6,29 +6,28 @@ class GarageDb:
         self.db_file = os.path.join(instance_path, 'history.db')
         self.init_file = os.path.join(resource_path, 'schema.sql')
 
-        # Now connect to database
+        # Run init script to ensure database structure
+        conn = self.get_connection()
+        with open(self.init_file, mode='r') as f:
+            conn.cursor().executescript(f.read())
+        conn.commit()
+        conn.close()
+
+    def get_connection(self):
         rv = sqlite3.connect(self.db_file)
         rv.row_factory = sqlite3.Row
-        self.__conn = rv
-
-        # Run init script
-        with open(self.init_file, mode='r') as f:
-            self.__conn.cursor().executescript(f.read())
-        self.__conn.commit()
-
-    def __del__(self):
-        self.close()
-
-    def close(self):
-        if self.__conn is not None:
-            self.__conn.close()
-            self.__conn = None
+        return rv
 
     def record_event(self, user_agent: str, login: str, event: str, description: str):
-        self.__conn.execute('insert into entries (UserAgent, Login, Event, Description) values (?, ?, ?, ?)',
-                            [user_agent, login, event, description])
-        self.__conn.commit()
+        conn = self.get_connection()
+        conn.execute('insert into entries (UserAgent, Login, Event, Description) values (?, ?, ?, ?)',
+                     [user_agent, login, event, description])
+        conn.commit()
+        conn.close()
 
     def read_history(self):
-        cur = self.__conn.execute('select datetime(timestamp, \'localtime\') as timestamp, event, description from entries order by timestamp desc')
-        return cur.fetchall()
+        conn = self.get_connection()
+        cur = conn.execute('select datetime(timestamp, \'localtime\') as timestamp, event, description from entries order by timestamp desc')
+        records = cur.fetchall()
+        conn.close()
+        return records
