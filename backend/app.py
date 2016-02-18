@@ -1,8 +1,8 @@
 import sys
 import os
 import logging
+from logging.handlers import RotatingFileHandler
 from common import constants
-from common.group_write_handler import GroupWriteRotatingFileHandler
 from common.iftt import IftttEvent
 import RPi.GPIO as GPIO
 import atexit
@@ -14,9 +14,9 @@ instance_path = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0]))) 
 resource_path = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0]))) + os.sep + 'resource'
 
 # Create logger
-file_handler = GroupWriteRotatingFileHandler(os.path.join(instance_path, constants.LOGFILE_NAME),
-                                             constants.LOGFILE_MODE, constants.LOGFILE_MAXSIZE,
-                                             constants.LOGFILE_BACKUP_COUNT)
+file_handler = RotatingFileHandler(os.path.join(instance_path, 'garage_backend.log'),
+                                   constants.LOGFILE_MODE, constants.LOGFILE_MAXSIZE,
+                                   constants.LOGFILE_BACKUP_COUNT)
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(logging.Formatter(constants.LOGFILE_FORMAT))
 console_handler = logging.StreamHandler()

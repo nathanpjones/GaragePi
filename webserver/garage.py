@@ -1,4 +1,5 @@
 import logging
+from logging.handlers import RotatingFileHandler
 
 import os
 import sys
@@ -7,7 +8,6 @@ from flask import Flask, request, session, g, redirect, url_for, abort, \
 
 from common import constants
 from common.db import GarageDb
-from common.group_write_handler import GroupWriteRotatingFileHandler
 from common.iftt import IftttEvent
 from webserver.client_api import GaragePiClient
 
@@ -18,9 +18,9 @@ app = Flask(__name__, instance_relative_config=True)
 
 # Set up logging
 app.logger_name = "WEBSRVR"
-file_handler = GroupWriteRotatingFileHandler(os.path.join(app.instance_path, constants.LOGFILE_NAME),
-                                             constants.LOGFILE_MODE, constants.LOGFILE_MAXSIZE,
-                                             constants.LOGFILE_BACKUP_COUNT)
+file_handler = RotatingFileHandler(os.path.join(app.instance_path, 'garage_webserver.log'),
+                                   constants.LOGFILE_MODE, constants.LOGFILE_MAXSIZE,
+                                   constants.LOGFILE_BACKUP_COUNT)
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(logging.Formatter(constants.LOGFILE_FORMAT))
 app.logger.addHandler(file_handler)
