@@ -1,6 +1,7 @@
 import zmq
 import json
 import logging
+from common.struct import Struct
 
 SEND_TIMEOUT = 2 * 1000  # in milliseconds
 RECV_TIMEOUT = 3 * 1000  # in milliseconds
@@ -77,9 +78,11 @@ class GaragePiClient(object):
         if reply_json is None: return None
         return json.loads(reply_json)
 
-    def trigger_relay(self):
+    def trigger_relay(self, user_agent: str, login: str):
         self.__logger.debug("Requesting 'trigger_relay'")
-        msg = ['trigger_relay', '{}']
+        data = Struct(user_agent=user_agent, login=login)
+        msg_json = data.to_json_bytes()
+        msg = ['trigger_relay', msg_json]
         reply_json = self.__send_recv_msg(msg)
         if reply_json is None: return None
         return json.loads(reply_json)

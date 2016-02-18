@@ -86,28 +86,22 @@ def show_control():
     app.logger.debug('Received request for /')
     return render_template('garage_control.html')
 
-
-def add_to_history(event: str, description: str):
-    """Adds an entry to the history database"""
-    db = get_db()
-    db.record_event(request.headers.get('User-Agent') if has_request_context() else 'SERVER',
-                    app.config['USERNAME'],
-                    event,
-                    description)
-
-
 @app.route('/trigger', methods=['POST'])
 def trigger_openclose():
+    app.logger.debug('Received POST to trigger')
     if not session.get('logged_in'):
+        app.logger.warning('Refusing to trigger relay because not logged in!')
         abort(401)
-    add_to_history('SwitchActivated', 'Door switch activated when in %s state.' % (get_status()['status_text']))
-    trigger_relay();
+    app.logger.debug('Triggering relay')
+    get_api_client().trigger_relay(request.headers.get('User-Agent') if has_request_context() else 'SERVER',
+                                   app.config['USERNAME']);
+    app.logger.debug('Relay triggered')
     flash('Relay successfully triggered')
     return redirect(url_for('show_control'))
 
 
 @app.route('/query_status')
-def query_status():
+def query_status() -> str:
     status = get_api_client().get_status()
     if status is None: return "{}"
     return jsonify(status)
@@ -145,13 +139,6 @@ def logout():
     session.pop('logged_in', None)
     flash('You were logged out')
     return redirect(url_for('show_control'))
-
-
-# ------- Functionality ----------
-
-def trigger_relay():
-    """Triggers the relay for a short period."""
-    get_api_client().trigger_relay()
 
 
 # ----- Tests --------

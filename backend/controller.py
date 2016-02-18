@@ -48,7 +48,7 @@ class GaragePiController:
         try:
             while True:
                 msg = socket.recv_multipart()
-                app.logger.debug("Received msg: ", msg)
+                app.logger.debug("Received msg: {0}".format(msg))
 
                 if len(msg) != 3:
                     error_msg = 'invalid message received: %s' % msg
@@ -73,12 +73,13 @@ class GaragePiController:
                     reply.append(self.get_status().to_json_bytes())
                 elif operation == 'trigger_relay':
                     # Trigger relay
-                    self.trigger_relay()
+                    self.trigger_relay(contents['user_agent'], contents['login'])
                     reply.append(b'{}')
                 else:
                     app.logger.error('unknown request')
 
                 socket.send_multipart(reply)
+
         finally:
             app.logger.info('Closing down socket')
             socket.setsockopt(zmq.LINGER, 500)
@@ -148,8 +149,14 @@ class GaragePiController:
         app.logger.debug('Checked GPU temp and got: %r' % res)
         return float(res.replace("temp=","").replace("'C\n",""))
 
-    def trigger_relay(self):
+    def trigger_relay(self, user_agent: str, login: str):
         """ Triggers the relay for a short period. """
+        app.logger.debug('Triggering relay for {0} ({1})'.format(login, user_agent))
+        self.__db.record_event(user_agent if user_agent else 'UNKNOWN',
+                               login if login else 'UNKNOWN',
+                               'SwitchActivated',
+                               'Door switch activated when in {0} state.'.format(self.get_status().status_text))
+
         with self.__relay_lock:
             # Relay triggers on low so just setting as output will trigger
             # and closing will switch back.
