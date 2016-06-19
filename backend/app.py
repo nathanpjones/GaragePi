@@ -30,32 +30,36 @@ logger.addHandler(console_handler)
 # Log startup
 logger.info('---------- Backend starting up!')
 
-# Load configuration
-logger.info('Loading configuration')
-config_file = os.path.join(instance_path, 'app.cfg')
-default_config_file = os.path.join(resource_path, 'default_app.cfg')
-config = Config(instance_path)
-config.from_pyfile(default_config_file)
-config.from_pyfile(config_file)
-#config = SimpleConfigParser(config_file, default_config_file)
+try:
+    # Load configuration
+    logger.info('Loading configuration')
+    config_file = os.path.join(instance_path, 'app.cfg')
+    default_config_file = os.path.join(resource_path, 'default_app.cfg')
+    config = Config(instance_path)
+    config.from_pyfile(default_config_file)
+    config.from_pyfile(config_file)
+    #config = SimpleConfigParser(config_file, default_config_file)
 
-# Set up iftt events if a maker key is present
-if config['IFTTT_MAKER_KEY'] is not None:
-    logger.info('Creating IFTTT events')
-    changed_event = IftttEvent(config['IFTTT_MAKER_KEY'], 'garage_door_changed', logger)
-    opened_event = IftttEvent(config['IFTTT_MAKER_KEY'], 'garage_door_opened', logger)
-    closed_event = IftttEvent(config['IFTTT_MAKER_KEY'], 'garage_door_closed', logger)
-    warning_event = IftttEvent(config['IFTTT_MAKER_KEY'], 'garage_door_warning', logger)
-else:
-    logger.info('No IFTTT maker key provided. No events will be raised.')
-    changed_event = None    # type: IftttEvent
-    opened_event = None     # type: IftttEvent
-    closed_event = None     # type: IftttEvent
-    warning_event = None    # type: IftttEvent
+    # Set up iftt events if a maker key is present
+    if config['IFTTT_MAKER_KEY']:
+        logger.info('Creating IFTTT events')
+        changed_event = IftttEvent(config['IFTTT_MAKER_KEY'], 'garage_door_changed', logger)
+        opened_event = IftttEvent(config['IFTTT_MAKER_KEY'], 'garage_door_opened', logger)
+        closed_event = IftttEvent(config['IFTTT_MAKER_KEY'], 'garage_door_closed', logger)
+        warning_event = IftttEvent(config['IFTTT_MAKER_KEY'], 'garage_door_warning', logger)
+    else:
+        logger.info('No IFTTT maker key provided. No events will be raised.')
+        changed_event = None    # type: IftttEvent
+        opened_event = None     # type: IftttEvent
+        closed_event = None     # type: IftttEvent
+        warning_event = None    # type: IftttEvent
 
-# Set up GPIO using BCM numbering
-logger.info('Setting GPIO numbering')
-GPIO.setmode(GPIO.BCM)
+    # Set up GPIO using BCM numbering
+    logger.info('Setting GPIO numbering')
+    GPIO.setmode(GPIO.BCM)
+except:
+    logger.exception('Exception during startup actions')
+    raise
 
 finalized = False
 
@@ -92,6 +96,8 @@ def main():
     try:
         from backend.controller import GaragePiController
         GaragePiController(config['IPC_PORT']).start()
+    except:
+        logger.exception('Exception while running controller')
     finally:
         logger.debug('Entered finally')
         finalize()
