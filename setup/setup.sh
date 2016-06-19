@@ -53,7 +53,7 @@ else
   # config file doesn't already exist.
   if [ ! -f "${INSTANCE_DIR}/app.cfg" ]; then
     cp "${RESOURCE_DIR}/default_app.cfg" "${INSTANCE_DIR}/app.cfg"
-    python "${SETUP_DIR}/generate_secret_key.py" >> "${INSTANCE_DIR}/app.cfg"
+    python3 "${SETUP_DIR}/generate_secret_key.py" >> "${INSTANCE_DIR}/app.cfg"
   fi
 
   # Install the daemon for the backend
