@@ -13,7 +13,7 @@ else
 
   # Make sure git is installed
   echo "Making sure that git is installed..."
-  sudo apt-get install git
+  ( sudo apt-get update -q && sudo apt-get install git ) || ( echo "Couldn't install git!"; exit 1 )
 
   # Pull down the repo
   echo -e "\nPulling down the repo..."
@@ -24,6 +24,6 @@ else
   echo -e "\nCalling the setup script..."
   cd ~/garage_pi
   chmod -v +x setup/setup.sh
-  ./setup/setup.sh
+  ./setup/setup.sh NO_APT_UPDATE
 
 fi
