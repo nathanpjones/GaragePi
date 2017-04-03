@@ -15,12 +15,13 @@ from zmq.devices import ProcessDevice, ThreadProxy
 import logging
 from . import app
 import json
+import time
 
 SEND_TIMEOUT = 2 * 1000  # in milliseconds
 RECV_TIMEOUT = 3 * 1000  # in milliseconds
 
-class GaragePiDevice(object):
-    def __init__(self, hostIn="*", hostOut="*", hostMon="*", portIn="5550", portOut="5560", portMon="5570", useProxy=True):
+class GaragePiProxy(object):
+    def __init__(self, hostIn="*", hostOut="*", hostMon="*", portIn="5550", portOut="5560", portMon="5570"):
         """Initialize object values and prepare any needed objects
 
         Args:
@@ -30,8 +31,6 @@ class GaragePiDevice(object):
             portIn: The port to use for inbound messages
             portOut: The port to use for outbound messages
             portMon: The port to use for monitor messages
-            useProxy: A boolean that identifies if the device should use a Proxy
-                or the old Device
 
         Returns:
             None
@@ -58,7 +57,6 @@ class GaragePiDevice(object):
         self.__portIn = portIn
         self.__portOut = portOut
         self.__portMon = portMon
-        self.__useProxy = useProxy
 
         # Setup the monitor information
         self.__context = zmq.Context()
@@ -66,72 +64,37 @@ class GaragePiDevice(object):
         self.__poller = zmq.Poller()
         self.__socket = None    # type: zmq.sugar.Socket
         self.__connect_addr_mon = None
-
-        # Create the device of the appropriate type
-        if self.__useProxy:
-            self.__device = ThreadProxy(zmq.DEALER, zmq.ROUTER, zmq.ROUTER)
-            #self.__device = ThreadProxy(zmq.ROUTER, zmq.DEALER, zmq.REP)
-            self.__logger.info('Using Proxy')
-        else:
-            self.__device = ProcessDevice(zmq.QUEUE, zmq.ROUTER, zmq.DEALER)
-            self.__logger.info('Using ProcessDevice')
+        self.__proxy = ThreadProxy(zmq.DEALER, zmq.ROUTER, zmq.PUB)
 
     def start(self):
-        """Start the device.
+        """Start the proxy.
 
-        Starts the 0MQ device for proxying messages. The device runs as a daemon thread, so it will die when
+        Starts the 0MQ proxy for proxying messages. The proxy runs as a daemon thread, so it will die when
         the rest of the app dies.
 
         Args:
-            big_table: An open Bigtable Table instance.
-            keys: A sequence of strings representing the key of each table row
-                to fetch.
-            other_silly_variable: Another optional variable, that has a much
-                longer name than the other args, and which does nothing.
-
+            None
         Returns:
-            A dict mapping keys to the corresponding table row data
-            fetched. Each row is represented as a tuple of strings. For
-            example:
-
-            {'Serak': ('Rigel VII', 'Preparer'),
-             'Zim': ('Irk', 'Invader'),
-             'Lrrr': ('Omicron Persei 8', 'Emperor')}
-
-            If a key from the keys argument is missing from the dictionary,
-            then that row was not found in the table.
+            None
 
         Raises:
-            IOError: An error occurred accessing the bigtable.Table object.
+            None
         """
-        self.__logger.info('bind_in device: tcp://{0}:{1}'.format(self.__hostIn, self.__portIn))
-        self.__logger.info('bind_out device: tcp://{0}:{1}'.format(self.__hostOut, self.__portOut))
-        self.__device.bind_in('tcp://{0}:{1}'.format(self.__hostIn, self.__portIn))
-        self.__device.bind_out('tcp://{0}:{1}'.format(self.__hostOut, self.__portOut))
-
-        if self.__useProxy:
-            self.__device.setsockopt_mon(zmq.IDENTITY, b'monitor')
-            self.__device.bind_mon('tcp://{0}:{1}'.format(self.__hostMon, self.__portMon))
-        #else:
-        #    self.__device.daemon = True
-        self.__device.start()
-        self.__running = True
-
-    def join(self, timeout=2000):
-        self.__running = False
-        self.__device.join(timeout)
-
-    def getContext(self):
-        if hasattr(self.__device, '_context'):
-            return self.__device._context
-        else:
-            return None
+        self.__logger.debug('bind_in proxy: tcp://{0}:{1}'.format(self.__hostIn, self.__portIn))
+        self.__logger.debug('bind_out proxy: tcp://{0}:{1}'.format(self.__hostOut, self.__portOut))
+        self.__logger.debug('bind_mon proxy: tcp://{0}:{1}'.format(self.__hostMon, self.__portMon))
+        self.__proxy.bind_in('tcp://{0}:{1}'.format(self.__hostIn, self.__portIn))
+        self.__proxy.bind_out('tcp://{0}:{1}'.format(self.__hostOut, self.__portOut))
+        self.__proxy.bind_mon('tcp://{0}:{1}'.format(self.__hostMon, self.__portMon))
+        self.__proxy.setsockopt_out(zmq.IDENTITY, b'PROXY')
+        self.__proxy.daemon = True
+        self.__proxy.start()
 
     def __create_socket(self):
         if self.__socket is not None:
             self.close()
 
-        self.__logger.debug("Connecting socket to: {0}".format(self.__connect_addr_mon))
+        self.__logger.debug("Connecting monitor socket to: {0}".format(self.__connect_addr_mon))
         self.__socket = self.__context.socket(zmq.DEALER)
         self.__socket.connect(self.__connect_addr_mon)
         self.__poller.register(self.__socket, zmq.POLLIN)
@@ -171,5 +134,28 @@ class GaragePiDevice(object):
 
         return self.__log_msg()
 
-    def simpleMon(self, host="localhost", port="5570"):
-        pass
+    def start_monitor(self, host="localhost", port="5570"):
+        context = zmq.Context()
+        socket = context.socket(zmq.SUB)
+        socket.setsockopt(zmq.RCVTIMEO, 2000)
+        socket.connect('tcp://{0}:{1}'.format(host, port))
+
+        NON_READ_THREASHOLD = 10
+        nonReadCount = 0
+        self.__monitoring = True
+        while self.__monitoring:
+            try:
+                message = socket.recv()
+                self.__logger.info("Received message: [{0}]".format(message))
+                nonReadCount = 0
+            except zmq.error.Again:
+                nonReadCount += 1
+                if nonReadCount % NON_READ_THREASHOLD == 0:
+                    self.__logger.warning("Monitor - no read {0} seconds".format(nonReadCount))
+                time.sleep(1000)
+
+        self.__logger.info('Monitor shut down')
+
+    def stop_monitor(self):
+        self.__logger.info('Monitor shutting down...')
+        self.__monitoring = False

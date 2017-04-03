@@ -5,8 +5,10 @@ import daemon
 import lockfile
 
 context = daemon.DaemonContext(
-    pidfile=lockfile.FileLock('/var/run/garagepidevice.pid'),
+    pidfile=lockfile.FileLock('/var/run/garagepiproxy.pid'),
     )
+
+print("".format(context))
 
 # To make sure we have the appropriate access
 garage_site_gid = grp.getgrnam('garage_site').gr_gid
@@ -17,7 +19,7 @@ with context:
     context.open()
 
     # Import after context opened so files opened during init won't be closed out
-    from device import app
+    from proxy import app
     app.main()
 
     # We're done after the main loop has ended
