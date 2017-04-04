@@ -95,7 +95,10 @@ def main():
     logger.info('Starting controller')
     try:
         from backend.controller import GaragePiController
-        GaragePiController(config['IPC_PORT']).start()
+        if config['USE_PROXY'] and config['PROXY_HOST']:
+            GaragePiController(config['IPC_PORT'], use_proxy=True, host=config['PROXY_HOST']).start()
+        else:
+            GaragePiController(config['IPC_PORT']).start()
     except:
         logger.exception('Exception while running controller')
     finally:
