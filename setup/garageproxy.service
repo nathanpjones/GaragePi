@@ -1,0 +1,12 @@
+[Unit]
+Description=GaragePi Proxy Service
+After=multi-user.target
+
+[Service]
+Type=simple
+PIDFile=/var/run/garage_proxy.pid
+ExecStart=/home/pi/garagepi/venv/bin/python /home/pi/garagepi/start_proxy_daemon.py
+WorkingDirectory=/home/pi/garagepi
+
+[Install]
+WantedBy=multi-user.target
