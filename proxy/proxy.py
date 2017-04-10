@@ -108,7 +108,7 @@ class GaragePiProxy(object):
         context = zmq.Context()
         socket = context.socket(zmq.SUB)
         socket.setsockopt(zmq.RCVTIMEO, 2000)
-        socket.setsockopt(zmq.SUBSCRIBE, "")
+        socket.setsockopt(zmq.SUBSCRIBE, b"")
         socket.connect('tcp://{0}:{1}'.format(host, port))
 
         NON_READ_THREASHOLD = 10
