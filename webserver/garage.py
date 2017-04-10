@@ -1,3 +1,6 @@
+"""Flask application to deliver the web interface for the GaragePi application.
+"""
+
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -110,8 +113,16 @@ def get_status():
 
 @app.route('/history')
 def show_history():
-    db = get_db()
-    entries = db.read_history()
+    """Display the operation history
+
+    Reads data from the database or from the backend server, and renders a page
+    with the newest data first.
+    """
+    if app.config['USE_PROXY']:
+        entries = get_api_client().get_history()
+    else:
+        db = get_db()
+        entries = db.read_history()
     return render_template('history.html', entries=entries)
 
 
