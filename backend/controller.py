@@ -93,7 +93,9 @@ class GaragePiController:
                     reply.append(b'{}')
                 elif operation == 'get_history':
                     # Get operation history
-                    reply.append(self.get_history().to_json_bytes())
+                    history = self.get_history()
+                    app.logger.info('Returning history. Record count: {0}'.format(len(history)))
+                    reply.extend(history)
                 else:
                     app.logger.error('unknown request')
 
@@ -194,4 +196,34 @@ class GaragePiController:
             time.sleep(1)
 
     def get_history(self):
-        pass
+        """ Get the history entries for delivery to the remote server.
+
+        Get the history entries, formatted as Structs in order to send to a
+        frontend server on a different machine.
+
+        Returns:
+            An list of json strings (as bytes), with one history entry per item.
+            For example:
+                [
+                    b'{
+                        "description": "Door state changed to OPEN.",
+                        "event": "SwitchActivated",
+                        "timestamp": "2017-03-21 18:04:12"}',
+                    b'{
+                        "description": "Door state changed to CLOSED.",
+                        "event": "SwitchActivated",
+                        "timestamp": "2017-03-21 18:03:39"}',
+                    b'{
+                        "description": "Door state changed to OPEN.",
+                        "event": "SensorTrip",
+                        "timestamp": "2017-03-21 18:03:39"}
+                ]
+        """
+        entries = self.__db.read_history()
+        history = []
+        for entry in entries:
+            data = Struct(timestamp=entry['timestamp'],
+                          event=entry['event'],
+                          description=entry['description'])
+            history.append(data.to_json_bytes())
+        return history
