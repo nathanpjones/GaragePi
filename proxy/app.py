@@ -1,3 +1,16 @@
+"""Launch and run the proxy.
+
+Provides the daemon structure to run the proxy service.
+"""
+__author__ = "Schlameel"
+__copyright__ = "Copyright 2017, Schlameel"
+__credits__ = ["Schlameel"]
+__license__ = "GPL2"
+__version__ = "0.1.0"
+__maintainer__ = "Schlameel"
+__email__ = "Schlameel@Schlameel"
+__status__ = "Development"
+
 import sys
 import os
 import logging
@@ -43,7 +56,6 @@ except:
     raise
 
 finalized = False
-simple = True
 proxy = None
 
 # Set up application finalizer
@@ -82,18 +94,9 @@ def main():
         from proxy.proxy import GaragePiProxy
         proxy = GaragePiProxy()
         proxy.start()
+        # Once the proxy is started, simply monitor and log messages.
         while True:
-            global simple
-            if simple:
-                proxy.start_monitor()
-            else:
-                monitor = True
-                if monitor:
-                    timeout = proxy.monitor()
-                    if timeout:
-                        time.sleep(500)
-                else:
-                    time.sleep(1000)
+            proxy.start_monitor()
 
     except Exception as e:
         logger.exception(e)

@@ -1,5 +1,8 @@
-"""Provides shortcut to ssh commands by maintaining a database nicknames that
-reference host-username pairs.
+"""Proxy to facilitate messaging when running on different machines.
+
+When the Raspberry Pi is behind a firewall, the frontend and this proxy, can run
+on a publicly visible server.  This proxy facilitates the messaging between the
+webserver frontend and the backend controller.
 """
 __author__ = "Schlameel"
 __copyright__ = "Copyright 2017, Schlameel"
@@ -7,8 +10,8 @@ __credits__ = ["Schlameel"]
 __license__ = "GPL2"
 __version__ = "0.1.0"
 __maintainer__ = "Schlameel"
-__email__ = "john@Schlameel.com"
-__status__ = "Prototype"
+__email__ = "Schlameel@Schlameel"
+__status__ = "Development"
 
 import zmq
 from zmq.devices import ProcessDevice, ThreadProxy
@@ -34,14 +37,6 @@ class GaragePiProxy(object):
 
         Returns:
             None
-            example:
-
-            {'Serak': ('Rigel VII', 'Preparer'),
-             'Zim': ('Irk', 'Invader'),
-             'Lrrr': ('Omicron Persei 8', 'Emperor')}
-
-            If a key from the keys argument is missing from the dictionary,
-            then that row was not found in the table.
 
         Raises:
             None
@@ -90,54 +85,30 @@ class GaragePiProxy(object):
         self.__proxy.daemon = True
         self.__proxy.start()
 
-    def __create_socket(self):
-        if self.__socket is not None:
-            self.close()
-
-        self.__logger.debug("Connecting monitor socket to: {0}".format(self.__connect_addr_mon))
-        self.__socket = self.__context.socket(zmq.DEALER)
-        self.__socket.connect(self.__connect_addr_mon)
-        self.__poller.register(self.__socket, zmq.POLLIN)
-
-    def __log_msg(self):
-        events = dict(self.__poller.poll(SEND_TIMEOUT))
-        if events.get(self.__socket) == zmq.POLLIN:
-            try:
-                # Receive response and make sure the return is converted to string if necessary
-                raw_msg = self.__socket.recv_multipart()[0]
-                message = bytes.decode(raw_msg) if type(raw_msg) is bytes else raw_msg
-                self.__logger.info("Received message: [{0}]".format(message))
-                return True
-            except zmq.error.Again:
-                # If the receive timed out then return None
-                self.__logger.warning("Receive operation timed out!")
-                self.__create_socket()
-                return False
-        else:
-            self.__logger.warning("Nothing to read")
-            self.__create_socket()
-            return False
-
-    def close(self):
-        self.__logger.debug("Closing out existing socket")
-        self.__socket.setsockopt(zmq.LINGER, 0)
-        self.__socket.close()
-        self.__poller.unregister(self.__socket)
-        self.__socket = None
-
-    def monitor(self, host="localhost", port="5570"):
-        if not self.__connect_addr_mon:
-            self.__connect_addr_mon = "tcp://{0}:{1}".format(host, port)
-
-        if not self.__socket:
-            self.__create_socket()
-
-        return self.__log_msg()
-
     def start_monitor(self, host="localhost", port="5570"):
+        """Monitor and log messages passed through the proxy
+
+        Begin the process of monitoring messages passed through the proxy.
+        Messages are logged to the proxy log.  This method runs until
+        stop_monitor is called.
+
+        Args:
+            host: A hostname or IP address of the proxy.  While possible to run
+                only the monitor on a seperate machine, it is likely to be
+                "localhost" or "127.0.0.1".
+            port: The port on which to monitor the proxy.  This should be the
+                same as was supplied to the proxy.
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
         context = zmq.Context()
         socket = context.socket(zmq.SUB)
         socket.setsockopt(zmq.RCVTIMEO, 2000)
+        socket.setsockopt(zmq.SUBSCRIBE, "")
         socket.connect('tcp://{0}:{1}'.format(host, port))
 
         NON_READ_THREASHOLD = 10
@@ -145,17 +116,23 @@ class GaragePiProxy(object):
         self.__monitoring = True
         while self.__monitoring:
             try:
-                message = socket.recv()
-                self.__logger.info("Received message: [{0}]".format(message))
+                message = socket.recv_multipart()
+                self.__logger.debug("Received message: [{0}]".format(message))
                 nonReadCount = 0
             except zmq.error.Again:
                 nonReadCount += 1
                 if nonReadCount % NON_READ_THREASHOLD == 0:
-                    self.__logger.warning("Monitor - no read {0} seconds".format(nonReadCount))
+                    self.__logger.warning("Monitor - no messages for {0} seconds".format(nonReadCount))
                 time.sleep(1000)
 
+        socket.close()
         self.__logger.info('Monitor shut down')
 
     def stop_monitor(self):
+        """Stop the monitor
+
+        This method tells the monitor to quit, but it may take the monitor a
+        couple of seconds to finish.
+        """
         self.__logger.info('Monitor shutting down...')
         self.__monitoring = False
