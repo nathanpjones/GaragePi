@@ -20,15 +20,21 @@ from webserver.client_api import GaragePiClient
 app = Flask(__name__, instance_relative_config=True)
 
 # Set up logging
+environment = app.config['ENVIRONMENT']
+logLevel = None
+if environment == 'DEVELOPMENT':
+    logLevel = logging.DEBUG
+if environment == 'PRODUCTION':
+    logLevel = logging.WARNING
 app.logger_name = "WEBSRVR"
 file_handler = RotatingFileHandler(os.path.join(app.instance_path, 'garage_webserver.log'),
                                    constants.LOGFILE_MODE, constants.LOGFILE_MAXSIZE,
                                    constants.LOGFILE_BACKUP_COUNT)
-file_handler.setLevel(logging.DEBUG)
+file_handler.setLevel(logLevel)
 file_handler.setFormatter(logging.Formatter(constants.LOGFILE_FORMAT))
 app.logger.addHandler(file_handler)
 app.debug_log_format = '%(relativeCreated)-6d [%(process)-5d:%(thread)#x] %(levelname)-5s %(message)s [in %(module)s @ %(pathname)s:%(lineno)d]'
-app.logger.setLevel(logging.DEBUG)
+app.logger.setLevel(logLevel)
 
 # Log startup
 app.logger.info('---------- Starting up!')

@@ -14,13 +14,20 @@ instance_path = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0]))) 
 resource_path = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0]))) + os.sep + 'resource'
 
 # Create logger
+# Set up logging
+environment = app.config['ENVIRONMENT']
+logLevel = None
+if environment == 'DEVELOPMENT':
+    logLevel = logging.DEBUG
+if environment == 'PRODUCTION':
+    logLevel = logging.WARNING
 file_handler = RotatingFileHandler(os.path.join(instance_path, 'garage_backend.log'),
                                    constants.LOGFILE_MODE, constants.LOGFILE_MAXSIZE,
                                    constants.LOGFILE_BACKUP_COUNT)
-file_handler.setLevel(logging.DEBUG)
+file_handler.setLevel(logLevel)
 file_handler.setFormatter(logging.Formatter(constants.LOGFILE_FORMAT))
 console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.DEBUG)
+console_handler.setLevel(logLevel)
 console_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s [in %(module)s @ %(pathname)s:%(lineno)d]"))
 logger = logging.Logger("CONTROL", level=logging.DEBUG)
 logger.addHandler(file_handler)
