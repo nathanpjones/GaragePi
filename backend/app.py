@@ -15,19 +15,13 @@ resource_path = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0]))) 
 
 # Create logger
 # Set up logging
-environment = app.config['ENVIRONMENT']
-logLevel = None
-if environment == 'DEVELOPMENT':
-    logLevel = logging.DEBUG
-if environment == 'PRODUCTION':
-    logLevel = logging.WARNING
 file_handler = RotatingFileHandler(os.path.join(instance_path, 'garage_backend.log'),
                                    constants.LOGFILE_MODE, constants.LOGFILE_MAXSIZE,
                                    constants.LOGFILE_BACKUP_COUNT)
-file_handler.setLevel(logLevel)
+file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(logging.Formatter(constants.LOGFILE_FORMAT))
 console_handler = logging.StreamHandler()
-console_handler.setLevel(logLevel)
+console_handler.setLevel(logging.DEBUG)
 console_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s [in %(module)s @ %(pathname)s:%(lineno)d]"))
 logger = logging.Logger("CONTROL", level=logging.DEBUG)
 logger.addHandler(file_handler)
@@ -46,6 +40,12 @@ try:
     config.from_pyfile(default_config_file)
     config.from_pyfile(config_file)
     #config = SimpleConfigParser(config_file, default_config_file)
+
+    environment = config['ENVIRONMENT']
+    if environment == 'PRODUCTION':
+        file_handler.setLevel(logging.WARNING)
+        console_handler.setLevel(logging.WARNING)
+        logger.setLevel(logging.WARNING)
 
     # Set up iftt events if a maker key is present
     if config['IFTTT_MAKER_KEY']:
