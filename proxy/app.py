@@ -52,7 +52,7 @@ try:
     config.from_pyfile(default_config_file)
     config.from_pyfile(config_file)
 
-    environment = app.config['ENVIRONMENT']
+    environment = config['ENVIRONMENT']
     logLevel = None
     if environment == 'PRODUCTION':
         file_handler.setLevel(logging.WARNING)
