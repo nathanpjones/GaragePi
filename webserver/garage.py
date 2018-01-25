@@ -19,22 +19,15 @@ from webserver.client_api import GaragePiClient
 # Create our application
 app = Flask(__name__, instance_relative_config=True)
 
-# Set up logging
-environment = app.config['ENVIRONMENT']
-logLevel = None
-if environment == 'DEVELOPMENT':
-    logLevel = logging.DEBUG
-if environment == 'PRODUCTION':
-    logLevel = logging.WARNING
 app.logger_name = "WEBSRVR"
 file_handler = RotatingFileHandler(os.path.join(app.instance_path, 'garage_webserver.log'),
                                    constants.LOGFILE_MODE, constants.LOGFILE_MAXSIZE,
                                    constants.LOGFILE_BACKUP_COUNT)
-file_handler.setLevel(logLevel)
+file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(logging.Formatter(constants.LOGFILE_FORMAT))
 app.logger.addHandler(file_handler)
 app.debug_log_format = '%(relativeCreated)-6d [%(process)-5d:%(thread)#x] %(levelname)-5s %(message)s [in %(module)s @ %(pathname)s:%(lineno)d]'
-app.logger.setLevel(logLevel)
+app.logger.setLevel(logging.DEBUG)
 
 # Log startup
 app.logger.info('---------- Starting up!')
@@ -57,6 +50,11 @@ app.config.from_pyfile(default_cfg_file)
 app.logger.debug('Looking for custom app config in \'%s\'' % os.path.join(app.instance_path, 'app.cfg'))
 app.config.from_pyfile('app.cfg')
 
+# Set up logging
+environment = app.config['ENVIRONMENT']
+if environment == 'PRODUCTION':
+    file_handler.setLevel(logging.WARNING)
+    app.logger.setLevel(logging.WARNING)
 
 # -------------- App Context Resources ----------------
 def get_api_client() -> GaragePiClient:
