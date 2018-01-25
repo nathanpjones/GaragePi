@@ -1,12 +1,24 @@
+"""Launch and run the proxy.
+
+Provides the daemon structure to run the proxy service.
+"""
+__author__ = "Schlameel"
+__copyright__ = "Copyright 2017, Schlameel"
+__credits__ = ["Schlameel"]
+__license__ = "GPL2"
+__version__ = "0.1.0"
+__maintainer__ = "Schlameel"
+__email__ = "Schlameel@Schlameel"
+__status__ = "Development"
+
 import sys
 import os
 import logging
 from logging.handlers import RotatingFileHandler
 from common import constants
-from common.iftt import IftttEvent
-import RPi.GPIO as GPIO
 import atexit
 import signal
+import time
 from flask import Config
 
 # Find paths
@@ -15,7 +27,7 @@ resource_path = os.path.dirname(os.path.realpath(os.path.abspath(sys.argv[0]))) 
 
 # Create logger
 # Set up logging
-file_handler = RotatingFileHandler(os.path.join(instance_path, 'garage_backend.log'),
+file_handler = RotatingFileHandler(os.path.join(instance_path, 'garage_proxy.log'),
                                    constants.LOGFILE_MODE, constants.LOGFILE_MAXSIZE,
                                    constants.LOGFILE_BACKUP_COUNT)
 file_handler.setLevel(logging.DEBUG)
@@ -23,13 +35,13 @@ file_handler.setFormatter(logging.Formatter(constants.LOGFILE_FORMAT))
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.DEBUG)
 console_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s [in %(module)s @ %(pathname)s:%(lineno)d]"))
-logger = logging.Logger("CONTROL", level=logging.DEBUG)
+logger = logging.Logger("PROXY", level=logging.DEBUG)
 logger.addHandler(file_handler)
 logger.addHandler(console_handler)
 
 
 # Log startup
-logger.info('---------- Backend starting up!')
+logger.info('---------- Proxy starting up!')
 
 try:
     # Load configuration
@@ -39,46 +51,30 @@ try:
     config = Config(instance_path)
     config.from_pyfile(default_config_file)
     config.from_pyfile(config_file)
-    #config = SimpleConfigParser(config_file, default_config_file)
 
     environment = config['ENVIRONMENT']
+    logLevel = None
     if environment == 'PRODUCTION':
         file_handler.setLevel(logging.WARNING)
         console_handler.setLevel(logging.WARNING)
         logger.setLevel(logging.WARNING)
 
-    # Set up iftt events if a maker key is present
-    if config['IFTTT_MAKER_KEY']:
-        logger.info('Creating IFTTT events')
-        changed_event = IftttEvent(config['IFTTT_MAKER_KEY'], 'garage_door_changed', logger)
-        opened_event = IftttEvent(config['IFTTT_MAKER_KEY'], 'garage_door_opened', logger)
-        closed_event = IftttEvent(config['IFTTT_MAKER_KEY'], 'garage_door_closed', logger)
-        warning_event = IftttEvent(config['IFTTT_MAKER_KEY'], 'garage_door_warning', logger)
-    else:
-        logger.info('No IFTTT maker key provided. No events will be raised.')
-        changed_event = None    # type: IftttEvent
-        opened_event = None     # type: IftttEvent
-        closed_event = None     # type: IftttEvent
-        warning_event = None    # type: IftttEvent
-
-    # Set up GPIO using BCM numbering
-    logger.info('Setting GPIO numbering')
-    GPIO.setmode(GPIO.BCM)
 except:
     logger.exception('Exception during startup actions')
     raise
 
 finalized = False
+proxy = None
 
 # Set up application finalizer
 def finalize():
     global finalized
+    global proxy
+    proxy.stop_monitor()
     logger.info('Entering finalizer.')
     if finalized:
         logger.info('Finalizer already called. Skipping...')
         return
-    logger.info('Calling cleanup on GPIO')
-    GPIO.cleanup()
     finalized = True
     return
 
@@ -90,6 +86,7 @@ def sigterm_handler(_signo, _stack_frame):
     # Raises SystemExit(0):
     logger.info('SIGTERM received!')
     finalize()
+    logger.info('Proxy terminated correctly')
     sys.exit(0)
 
 logger.info('Registering SIGTERM handler')
@@ -99,15 +96,19 @@ logger.info('Finished with startup actions')
 
 # Provide startup routine
 def main():
-    logger.info('Starting controller')
+    global proxy
+    logger.info('Starting proxy')
     try:
-        from backend.controller import GaragePiController
-        if config['USE_PROXY'] and config['PROXY_HOST']:
-            GaragePiController(config['IPC_PORT'], use_proxy=True, host=config['PROXY_HOST']).start()
-        else:
-            GaragePiController(config['IPC_PORT']).start()
-    except:
-        logger.exception('Exception while running controller')
+        from proxy.proxy import GaragePiProxy
+        proxy = GaragePiProxy()
+        proxy.start()
+        # Once the proxy is started, simply monitor and log messages.
+        while True:
+            proxy.start_monitor()
+
+    except Exception as e:
+        logger.exception(e)
+        logger.exception('Exception while running proxy')
     finally:
         logger.debug('Entered finally')
         finalize()

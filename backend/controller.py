@@ -14,9 +14,13 @@ OPEN = "OPEN"
 CLOSED = "CLOSED"
 
 class GaragePiController:
-    def __init__(self, port="5550"):
-        self.__bind_addr = "tcp://*:%s" % port
-        app.logger.info("Bind address: " + self.__bind_addr)
+    def __init__(self, port="5550", use_proxy=False, host=None):
+        self.__use_proxy = use_proxy
+        if use_proxy and host is not None:
+            self.__bind_addr = "tcp://{0}:{1}".format(host, port)
+        else:
+            self.__bind_addr = "tcp://*:%s" % port
+        app.logger.info("Bind address: {}".format(self.__bind_addr))
 
         self.__relay_lock = threading.Lock()
 
@@ -40,7 +44,12 @@ class GaragePiController:
     def start(self):
         context = zmq.Context()
         socket = context.socket(zmq.ROUTER)
-        socket.bind(self.__bind_addr)
+        if self.__use_proxy:
+            # Connect if we are using the proxy
+            socket.connect(self.__bind_addr)
+        else:
+            # Bind if we are working locally
+            socket.bind(self.__bind_addr)
         socket.setsockopt(zmq.SNDTIMEO, 1000)
 
         app.logger.info("Entering listen loop... ")
@@ -48,22 +57,29 @@ class GaragePiController:
         try:
             while True:
                 msg = socket.recv_multipart()
-                app.logger.debug("Received msg: {0}".format(msg))
+                app.logger.debug("Received a msg: {0}".format(msg))
 
-                if len(msg) != 3:
-                    error_msg = 'invalid message received: %s' % msg
+                if app.config['USE_PROXY']:
+                    # When using the proxy, allow for two socket IDs
+                    messageSize = 4
+                    offset = 1
+                    reply = msg[0:2]
+                else:
+                    # Only a single socket ID when local
+                    messageSize = 3
+                    offset = 0
+                    reply = [msg[0]]
+
+                if len(msg) != messageSize:
+                    error_msg = 'invalid message received: length %d, %s' % (len(msg), msg)
                     app.logger.error(error_msg)
-                    reply = [msg[0], error_msg]
+                    reply.extend(error_msg)
                     socket.send_multipart(reply)
                     continue
 
                 # Break out incoming message
-                id = msg[0]
-                operation = bytes.decode(msg[1]) if type(msg[1]) is bytes else msg[1]
-                contents = json.loads(bytes.decode(msg[2]) if type(msg[2]) is bytes else msg[2])
-
-                # Initialize the reply. Must always send back the id with ROUTER
-                reply = [id]
+                operation = bytes.decode(msg[1 + offset]) if type(msg[1 + offset]) is bytes else msg[1 + offset]
+                contents = json.loads(bytes.decode(msg[2 + offset]) if type(msg[2 + offset]) is bytes else msg[2 + offset])
 
                 if operation == 'echo':
                     # Just echo back the original contents serialized back to a string
@@ -75,9 +91,15 @@ class GaragePiController:
                     # Trigger relay
                     self.trigger_relay(contents['user_agent'], contents['login'])
                     reply.append(b'{}')
+                elif operation == 'get_history':
+                    # Get operation history
+                    history = self.get_history()
+                    app.logger.info('Returning history. Record count: {0}'.format(len(history)))
+                    reply.extend(history)
                 else:
                     app.logger.error('unknown request')
 
+                app.logger.debug("Replying: {0}".format(reply))
                 socket.send_multipart(reply)
 
         finally:
@@ -172,3 +194,36 @@ class GaragePiController:
         while 1:
             schedule.run_pending()
             time.sleep(1)
+
+    def get_history(self):
+        """ Get the history entries for delivery to the remote server.
+
+        Get the history entries, formatted as Structs in order to send to a
+        frontend server on a different machine.
+
+        Returns:
+            An list of json strings (as bytes), with one history entry per item.
+            For example:
+                [
+                    b'{
+                        "description": "Door state changed to OPEN.",
+                        "event": "SwitchActivated",
+                        "timestamp": "2017-03-21 18:04:12"}',
+                    b'{
+                        "description": "Door state changed to CLOSED.",
+                        "event": "SwitchActivated",
+                        "timestamp": "2017-03-21 18:03:39"}',
+                    b'{
+                        "description": "Door state changed to OPEN.",
+                        "event": "SensorTrip",
+                        "timestamp": "2017-03-21 18:03:39"}
+                ]
+        """
+        entries = self.__db.read_history()
+        history = []
+        for entry in entries:
+            data = Struct(timestamp=entry['timestamp'],
+                          event=entry['event'],
+                          description=entry['description'])
+            history.append(data.to_json_bytes())
+        return history

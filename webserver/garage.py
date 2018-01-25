@@ -1,3 +1,6 @@
+"""Flask application to deliver the web interface for the GaragePi application.
+"""
+
 import logging
 from logging.handlers import RotatingFileHandler
 
@@ -16,7 +19,6 @@ from webserver.client_api import GaragePiClient
 # Create our application
 app = Flask(__name__, instance_relative_config=True)
 
-# Set up logging
 app.logger_name = "WEBSRVR"
 file_handler = RotatingFileHandler(os.path.join(app.instance_path, 'garage_webserver.log'),
                                    constants.LOGFILE_MODE, constants.LOGFILE_MAXSIZE,
@@ -48,6 +50,11 @@ app.config.from_pyfile(default_cfg_file)
 app.logger.debug('Looking for custom app config in \'%s\'' % os.path.join(app.instance_path, 'app.cfg'))
 app.config.from_pyfile('app.cfg')
 
+# Set up logging
+environment = app.config['ENVIRONMENT']
+if environment == 'PRODUCTION':
+    file_handler.setLevel(logging.WARNING)
+    app.logger.setLevel(logging.WARNING)
 
 # -------------- App Context Resources ----------------
 def get_api_client() -> GaragePiClient:
@@ -110,8 +117,16 @@ def get_status():
 
 @app.route('/history')
 def show_history():
-    db = get_db()
-    entries = db.read_history()
+    """Display the operation history
+
+    Reads data from the database or from the backend server, and renders a page
+    with the newest data first.
+    """
+    if app.config['USE_PROXY']:
+        entries = get_api_client().get_history()
+    else:
+        db = get_db()
+        entries = db.read_history()
     return render_template('history.html', entries=entries)
 
 
