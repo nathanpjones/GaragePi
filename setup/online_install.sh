@@ -13,7 +13,7 @@ else
 
   # Make sure git is installed
   echo "Making sure that git is installed..."
-  ( sudo apt-get update -q && sudo apt-get install git ) || ( echo "Couldn't install git!"; exit 1 )
+  ( sudo apt-get update -q && sudo apt-get install -y git ) || ( echo "Couldn't install git!"; exit 1 )
 
   # Pull down the repo
   echo -e "\nPulling down the repo..."
