@@ -74,6 +74,7 @@
                             .removeClass("text-danger text-success")
                             .addClass(data.is_open ? "text-danger": "text-success");
                 $("#openCloseButton").html(data.is_open ? "Close Door": "Open Door");
+                $("#RealOpenCloseButton").html(data.is_open ? "Close": "Open");
                 $("#doorAction").html(data.is_open ? "close": "open");
                 $("#CrackOpenDoorButton").removeClass("invisible")
                                         .removeClass("visible")
