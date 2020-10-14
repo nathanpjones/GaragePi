@@ -10,6 +10,7 @@ from common import constants
 from common.db import GarageDb
 from common.iftt import IftttEvent
 from webserver.client_api import GaragePiClient
+import time
 
 # ------------- Setup ------------
 
@@ -96,6 +97,24 @@ def trigger_openclose():
     flash('Relay successfully triggered')
     return redirect(url_for('show_control'))
 
+@app.route('/crack', methods=['POST'])
+def trigger_crack():
+    app.logger.debug('Received POST to crack')
+    if not session.get('logged_in'):
+        app.logger.warning('Refusing to trigger relay because not logged in!')
+        abort(401)
+    app.logger.debug('Triggering relay')
+    get_api_client().trigger_relay(request.headers.get('User-Agent') if has_request_context() else 'SERVER',
+                                   app.config['USERNAME']);
+    app.logger.debug('Relay triggered')
+    flash('Relay successfully triggered')
+    time.sleep(2)
+    app.logger.debug('Triggering relay')
+    get_api_client().trigger_relay(request.headers.get('User-Agent') if has_request_context() else 'SERVER',
+                                   app.config['USERNAME']);
+    app.logger.debug('Relay triggered')
+    flash('Relay successfully triggered')
+    return redirect(url_for('show_control'))
 
 @app.route('/query_status')
 def query_status() -> str:

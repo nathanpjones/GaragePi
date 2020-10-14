@@ -39,8 +39,18 @@
       </div>
 
       <!-- Open / Close button -->
-      <button type="button" id="openCloseButton" class="btn btn-primary btn-lg btn-block" style="vertical-align: middle" data-toggle="modal" data-target="#confirmModal">
+      <!-- I commented out this original button to get rid of the annoying confirm toggle
+        <button type="button" id="openCloseButton" class="btn btn-primary btn-lg btn-block" style="vertical-align: middle" data-toggle="modal" data-target="#confirmModal">
           Open / Close Door
+      </button>
+      -->
+      <button type="button" id="RealOpenCloseButton" class="btn btn-primary btn-lg btn-block" style="vertical-align: middle">
+        Open / Close Door
+      </button>
+      <br>
+      <!-- I added another button that will act as the button to crack the garage open slightly -->
+      <button type="button" id="CrackOpenDoorButton" class="btn btn-primary btn-lg btn-block" style="vertical-align: middle">
+        Crack Open Garage
       </button>
     </div>
 
@@ -81,12 +91,28 @@
   }
 
   // Hookup our confirm button to trigger the door switch
+  //$(function(){
+  //    $('#triggerButton').click(function(e){
+  //      e.preventDefault();
+  //      $.post("{{ url_for('trigger_openclose') }}");
+  //    });
+  //});
+
+  //I modified the original button trigger above and commented it out. Put it back to replace the modal confirm
   $(function(){
-      $('#triggerButton').click(function(e){
+      $('#RealOpenCloseButton').click(function(e){
         e.preventDefault();
         $.post("{{ url_for('trigger_openclose') }}");
       });
   });
+
+  $(function(){
+      $('#CrackOpenDoorButton').click(function(e){
+        e.preventDefault();
+        $.post("{{ url_for('trigger_crack') }}");
+      });
+  });
+
 
   // Begin the update query loop
   startStatusUpdate();
