@@ -75,6 +75,9 @@
                             .addClass(data.is_open ? "text-danger": "text-success");
                 $("#openCloseButton").html(data.is_open ? "Close Door": "Open Door");
                 $("#doorAction").html(data.is_open ? "close": "open");
+                $("#CrackOpenDoorButton").removeClass("invisible")
+                                        .removeClass("visible")
+                                        .addClass(data.is_open ? "invisible": "visible");
                 $("#cpuTemp").html(data.cpu_temp_c.toFixed(2));
                 $("#gpuTemp").html(data.gpu_temp_c.toFixed(2));
               })
