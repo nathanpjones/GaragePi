@@ -17,6 +17,14 @@ front end. All these are new to me so forgive / correct any noob mistakes.
 
 [Flask]: http://flask.pocoo.org/
 
+#### Oct 2020 Update - Added Crack Open Garage Feature
+
+GaragePi under this fork now has an option to crack open the garage. The fuction is a simple time-delay that triggers the relay twice.
+The button to crack the garage does not have a modal confirmation, so to make the UI more consistent I removed the modal
+confirmation from the original open button.
+
+Modifiy the time delay in the app.cfg file to make it work for your garage.
+
 #### Feb 2016 Update - IFTTT Maker Support!
 
 GaragePi now supports [IFTTT] alerts through the new [Maker Channel]. It will generate events when an open or close is
