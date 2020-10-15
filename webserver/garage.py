@@ -108,7 +108,8 @@ def trigger_crack():
                                    app.config['USERNAME']);
     app.logger.debug('Relay triggered')
     flash('Relay successfully triggered')
-    time.sleep(2)
+    crack_delay = app.config['CRACK_DELAY']
+    time.sleep(crack_delay)
     app.logger.debug('Triggering relay')
     get_api_client().trigger_relay(request.headers.get('User-Agent') if has_request_context() else 'SERVER',
                                    app.config['USERNAME']);
