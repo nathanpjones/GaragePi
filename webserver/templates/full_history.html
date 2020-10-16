@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block body %}
-  <h3 style="margin-bottom: 15px; margin-left: 4px">Activity History</h3>
+  <h3 style="margin-bottom: 15px; margin-left: 4px">Full Activity History</h3>
   <div> <!-- class="table-responsive" -->
     <table class="table table-striped table-condensed">
     <tr><th>Time!</th><th>Event</th><th>Description</th></tr>
@@ -14,6 +14,5 @@
       <tr><td colspan=3>No history yet.</td></tr>
     {% endfor %}
     </table>
-    <a href="{{ url_for('show_full_history') }}">Show Full History</a>
   </div>
 {% endblock %}

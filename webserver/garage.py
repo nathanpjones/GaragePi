@@ -134,6 +134,11 @@ def show_history():
     entries = db.read_history()
     return render_template('history.html', entries=entries)
 
+@app.route('/full_history')
+def show_full_history():
+    db = get_db()
+    entries = db.read_full_history()
+    return render_template('full_history.html', entries=entries)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
