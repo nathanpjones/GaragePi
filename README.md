@@ -67,6 +67,7 @@ other features that require running all the time instead of just within a web re
 - Open / close the garage door with the press of a button.
 - See if garage door is currently open.
 - See history of when the door was opened or closed even when it wasn't opened/closed using the app.
+- Download entire history to CSV file
 - Garage door activity generates [IFTTT] events.
 - Responsive UI for both desktop and mobile use.
 - Show the RPI's internal temps because, well, I can.
@@ -81,7 +82,7 @@ I'm definitely planning on getting these done.
 Okay, I might never implement these, but here are some ideas for what would make it even better (read more 
 overengineered).
 
-- Add a function to open the door just partway for ventilation.
+- ~~Add a function to open the door just partway for ventilation.~~
 - Close the door automatically at a certain time or after a certain amount of time.
 - Show stats of how much time the door is open, what hours it's most open, or other interesting trends. 
 
