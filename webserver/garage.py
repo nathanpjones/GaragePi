@@ -4,13 +4,14 @@ from logging.handlers import RotatingFileHandler
 import os
 import sys
 from flask import Flask, request, session, g, redirect, url_for, abort, \
-     render_template, flash, jsonify, has_request_context
+     render_template, flash, jsonify, has_request_context, send_from_directory, send_file
 
 from common import constants
 from common.db import GarageDb
 from common.iftt import IftttEvent
 from webserver.client_api import GaragePiClient
 import time
+import csv
 
 # ------------- Setup ------------
 
@@ -154,6 +155,22 @@ def login():
             flash('You were logged in')
             return redirect(url_for('show_control'))
     return render_template('login.html', error=error)
+
+
+@app.route('/download')
+def download():
+    db = get_db()
+    entries = db.read_full_history()
+    filename = 'history.csv'
+    with open(os.path.join(app.instance_path, filename),'w', newline='') as csv_file:
+        wr = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
+        wr.writerow(["Time","Event","Description"])
+        for row in entries:
+            wr.writerow(row)
+    try:
+        return send_from_directory(os.path.join(app.instance_path), filename, as_attachment=True, attachment_filename=filename)
+    except:
+        abort(404)
 
 
 @app.route('/logout')
