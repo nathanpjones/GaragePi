@@ -4,6 +4,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 from common import constants
 from common.iftt import IftttEvent
+from common.telegram import TelegramNotification
 import RPi.GPIO as GPIO
 import atexit
 import signal
@@ -53,6 +54,18 @@ try:
         opened_event = None     # type: IftttEvent
         closed_event = None     # type: IftttEvent
         warning_event = None    # type: IftttEvent
+    if config['APPRISE_TELEGRAM_KEY']:
+        logger.info('Creating Telegram events')
+        tg_changed_event = TelegramNotification(config['APPRISE_TELEGRAM_KEY'], config['APPRISE_TELEGRAM_CHAT_ID'], "Garage Door Changed", logger)
+        tg_opened_event = TelegramNotification(config['APPRISE_TELEGRAM_KEY'], config['APPRISE_TELEGRAM_CHAT_ID'], "Garage Door Opened", logger)
+        tg_closed_event = TelegramNotification(config['APPRISE_TELEGRAM_KEY'], config['APPRISE_TELEGRAM_CHAT_ID'], "Garage Door Closed", logger)
+        tg_warning_event = TelegramNotification(config['APPRISE_TELEGRAM_KEY'], config['APPRISE_TELEGRAM_CHAT_ID'], "Garage Door Still Open", logger)
+    else:
+        logger.info('No Telegram bot key provided. No events will be raised.')
+        tg_changed_event = None    # type: TelegramNotification
+        tg_opened_event = None     # type: TelegramNotification
+        tg_closed_event = None     # type: TelegramNotification
+        tg_warning_event = None    # type: TelegramNotification
 
     # Set up GPIO using BCM numbering
     logger.info('Setting GPIO numbering')

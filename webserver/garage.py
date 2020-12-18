@@ -9,6 +9,7 @@ from flask import Flask, request, session, g, redirect, url_for, abort, \
 from common import constants
 from common.db import GarageDb
 from common.iftt import IftttEvent
+from common.telegram import TelegramNotification
 from webserver.client_api import GaragePiClient
 import time
 import csv
@@ -213,3 +214,15 @@ def test_ifttt():
     result = event.trigger(value1, value2, value3)
 
     return 'Result: %r' % (result,)
+
+@app.route('/test_telegram')
+def test_telegram():
+    if not app.debug: return 'Only available when debug is set to True in application config.'
+    telegram_chat_id = str(app.config['APPRISE_TELEGRAM_CHAT_ID'])
+    telegram_key = str(app.config['APPRISE_TELEGRAM_KEY'])
+    if not telegram_key: return 'No Telegram key provided!'
+    app.logger.debug("Testing Telegram with %s and %s" % (telegram_key,telegram_chat_id))
+
+    event = TelegramNotification(telegram_key, telegram_chat_id, "Test notification from GaragePi", app.logger)
+    event.trigger()
+    return redirect(url_for('show_control'))

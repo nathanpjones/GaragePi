@@ -39,11 +39,6 @@
       </div>
 
       <!-- Open / Close button -->
-      <!-- I commented out this original button to get rid of the annoying confirm toggle
-        <button type="button" id="openCloseButton" class="btn btn-primary btn-lg btn-block" style="vertical-align: middle" data-toggle="modal" data-target="#confirmModal">
-          Open / Close Door
-      </button>
-      -->
       <button type="button" id="RealOpenCloseButton" class="btn btn-primary btn-lg btn-block" style="vertical-align: middle">
         Open / Close Door
       </button>
@@ -94,15 +89,7 @@
     clearInterval(nIntervId);
   }
 
-  // Hookup our confirm button to trigger the door switch
-  //$(function(){
-  //    $('#triggerButton').click(function(e){
-  //      e.preventDefault();
-  //      $.post("{{ url_for('trigger_openclose') }}");
-  //    });
-  //});
-
-  //I modified the original button trigger above and commented it out. Put it back to replace the modal confirm
+  //Hook up open/close button to trigger switch
   $(function(){
       $('#RealOpenCloseButton').click(function(e){
         e.preventDefault();
@@ -110,6 +97,7 @@
       });
   });
 
+  //hook up crack open door button to trigger switch twice
   $(function(){
       $('#CrackOpenDoorButton').click(function(e){
         e.preventDefault();
