@@ -17,6 +17,13 @@ front end. All these are new to me so forgive / correct any noob mistakes.
 
 [Flask]: http://flask.pocoo.org/
 
+
+#### Dec 2020 Update - Added Telegram Notifications
+
+GaragePi now supports Telegram notifications. Get your Bot key and chat ID and place it in the app.cfg file to enable telegram notifications.
+You can read more about getting this information from the apprise wiki https://github.com/caronc/apprise/wiki/Notify_telegram
+
+
 #### Oct 2020 Update - Added Crack Open Garage Feature
 
 GaragePi under this fork now has an option to crack open the garage. The fuction is a simple time-delay that triggers the relay twice.
