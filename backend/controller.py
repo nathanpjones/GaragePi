@@ -117,12 +117,15 @@ class GaragePiController:
             if self.__door_state:
                 change = 'opened'
                 specific_event = app.opened_event
+                tg_specific_event = app.tg_opened_event
             else:
                 change = 'closed'
                 specific_event = app.closed_event
+                tg_specific_event = app.tg_closed_event
 
             if app.changed_event is not None: app.changed_event.trigger(change)
             if specific_event is not None: specific_event.trigger()
+            if tg_specific_event is not None: tg_specific_event.trigger()
 
         app.logger.info("door {0} (pin {1} is {2})".format("OPENED" if new_state else "CLOSED", pin_changed, new_state))
 
@@ -167,6 +170,8 @@ class GaragePiController:
     def check_door_open_for_warning(self):
         if self.__door_state and app.warning_event is not None:
             app.warning_event.trigger('open')
+        if self.__door_state and app.tg_warning_event is not None:
+            app.tg_warning_event.trigger()
 
     def run_schedule(self):
         while 1:

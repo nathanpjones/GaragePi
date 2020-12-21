@@ -14,5 +14,19 @@
       <tr><td colspan=3>No history yet.</td></tr>
     {% endfor %}
     </table>
+    <a href="{{ url_for('show_full_history') }}">
+      <button type="button" id="RealOpenCloseButton" class="btn btn-primary btn-lg btn-block" style="vertical-align: middle">
+        Show Full History
+      </button>
+    </a>
+    <br>
+    <br>
+    <a href="{{ url_for('download') }}">
+      <button type="button" id="RealOpenCloseButton" class="btn btn-primary btn-lg btn-block" style="vertical-align: middle">
+      Download History CSV
+      </button>
+    </a>
+    <br>
+    <br>
   </div>
 {% endblock %}

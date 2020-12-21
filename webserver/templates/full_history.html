@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block body %}
+  <h3 style="margin-bottom: 15px; margin-left: 4px">Full Activity History</h3>
+  <div> <!-- class="table-responsive" -->
+    <table class="table table-striped table-condensed">
+    <tr><th>Time!</th><th>Event</th><th>Description</th></tr>
+    {% for entry in entries %}
+      <tr >
+          <td>{{ entry.timestamp }}</td>
+          <td>{{ entry.event|safe }}</td>
+          <td>{{ entry.description|safe }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan=3>No history yet.</td></tr>
+    {% endfor %}
+    </table>
+  </div>
+{% endblock %}

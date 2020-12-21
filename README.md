@@ -17,6 +17,21 @@ front end. All these are new to me so forgive / correct any noob mistakes.
 
 [Flask]: http://flask.pocoo.org/
 
+
+#### Dec 2020 Update - Added Telegram Notifications
+
+GaragePi now supports Telegram notifications. Get your Bot key and chat ID and place it in the app.cfg file to enable telegram notifications.
+You can read more about getting this information from the apprise wiki https://github.com/caronc/apprise/wiki/Notify_telegram
+
+
+#### Oct 2020 Update - Added Crack Open Garage Feature
+
+GaragePi under this fork now has an option to crack open the garage. The fuction is a simple time-delay that triggers the relay twice.
+The button to crack the garage does not have a modal confirmation, so to make the UI more consistent I removed the modal
+confirmation from the original open button.
+
+Modifiy the time delay in the app.cfg file to make it work for your garage.
+
 #### Feb 2016 Update - IFTTT Maker Support!
 
 GaragePi now supports [IFTTT] alerts through the new [Maker Channel]. It will generate events when an open or close is
@@ -59,6 +74,7 @@ other features that require running all the time instead of just within a web re
 - Open / close the garage door with the press of a button.
 - See if garage door is currently open.
 - See history of when the door was opened or closed even when it wasn't opened/closed using the app.
+- Download entire history to CSV file
 - Garage door activity generates [IFTTT] events.
 - Responsive UI for both desktop and mobile use.
 - Show the RPI's internal temps because, well, I can.
@@ -73,7 +89,7 @@ I'm definitely planning on getting these done.
 Okay, I might never implement these, but here are some ideas for what would make it even better (read more 
 overengineered).
 
-- Add a function to open the door just partway for ventilation.
+- ~~Add a function to open the door just partway for ventilation.~~
 - Close the door automatically at a certain time or after a certain amount of time.
 - Show stats of how much time the door is open, what hours it's most open, or other interesting trends. 
 

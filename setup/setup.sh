@@ -50,7 +50,7 @@ if [ $? -ne 0 ]; then exit 1; fi
 
 # Install virtual environment and requirements
 echo -e "\nSetting up virtual environment..."
-virtualenv --python python3 --no-site-packages --distribute venv \
+virtualenv --python python3 venv \
 && source venv/bin/activate \
 && pip install -r "${DIR}/requirements.txt"
 if [ $? -ne 0 ]; then exit 1; fi

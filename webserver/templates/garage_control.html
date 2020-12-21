@@ -39,8 +39,13 @@
       </div>
 
       <!-- Open / Close button -->
-      <button type="button" id="openCloseButton" class="btn btn-primary btn-lg btn-block" style="vertical-align: middle" data-toggle="modal" data-target="#confirmModal">
-          Open / Close Door
+      <button type="button" id="RealOpenCloseButton" class="btn btn-primary btn-lg btn-block" style="vertical-align: middle">
+        Open / Close Door
+      </button>
+      <br>
+      <!-- I added another button that will act as the button to crack the garage open slightly -->
+      <button type="button" id="CrackOpenDoorButton" class="btn btn-primary btn-lg btn-block" style="vertical-align: middle">
+        Crack Open Garage
       </button>
     </div>
 
@@ -64,7 +69,11 @@
                             .removeClass("text-danger text-success")
                             .addClass(data.is_open ? "text-danger": "text-success");
                 $("#openCloseButton").html(data.is_open ? "Close Door": "Open Door");
+                $("#RealOpenCloseButton").html(data.is_open ? "Close": "Open");
                 $("#doorAction").html(data.is_open ? "close": "open");
+                $("#CrackOpenDoorButton").removeClass("invisible")
+                                        .removeClass("visible")
+                                        .addClass(data.is_open ? "invisible": "visible");
                 $("#cpuTemp").html(data.cpu_temp_c.toFixed(2));
                 $("#gpuTemp").html(data.gpu_temp_c.toFixed(2));
               })
@@ -80,13 +89,22 @@
     clearInterval(nIntervId);
   }
 
-  // Hookup our confirm button to trigger the door switch
+  //Hook up open/close button to trigger switch
   $(function(){
-      $('#triggerButton').click(function(e){
+      $('#RealOpenCloseButton').click(function(e){
         e.preventDefault();
         $.post("{{ url_for('trigger_openclose') }}");
       });
   });
+
+  //hook up crack open door button to trigger switch twice
+  $(function(){
+      $('#CrackOpenDoorButton').click(function(e){
+        e.preventDefault();
+        $.post("{{ url_for('trigger_crack') }}");
+      });
+  });
+
 
   // Begin the update query loop
   startStatusUpdate();

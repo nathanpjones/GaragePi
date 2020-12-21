@@ -28,6 +28,13 @@ class GarageDb:
     def read_history(self):
         conn = self.get_connection()
         cur = conn.execute('select datetime(timestamp, \'localtime\') as timestamp, event, description from entries order by timestamp desc')
+        records = cur.fetchmany(500)
+        conn.close()
+        return records
+    
+    def read_full_history(self):
+        conn = self.get_connection()
+        cur = conn.execute('select datetime(timestamp, \'localtime\') as timestamp, event, description from entries order by timestamp desc')
         records = cur.fetchall()
         conn.close()
         return records
