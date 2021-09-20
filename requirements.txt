@@ -10,4 +10,4 @@ RPi.GPIO==0.7.0
 schedule==0.6.0
 Werkzeug==1.0.1
 wheel==0.36.2
-apprise==0.8.9
+apprise==0.9.5.1
